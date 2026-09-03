@@ -95,30 +95,36 @@ export type Database = {
           equipment: string
           id: string
           media_end_path: string | null
+          media_loop_path: string | null
           media_start_path: string | null
           name: string
           primary_muscle: string
           slug: string
+          steps: string[]
         }
         Insert: {
           cue?: string | null
           equipment: string
           id?: string
           media_end_path?: string | null
+          media_loop_path?: string | null
           media_start_path?: string | null
           name: string
           primary_muscle: string
           slug: string
+          steps?: string[]
         }
         Update: {
           cue?: string | null
           equipment?: string
           id?: string
           media_end_path?: string | null
+          media_loop_path?: string | null
           media_start_path?: string | null
           name?: string
           primary_muscle?: string
           slug?: string
+          steps?: string[]
         }
         Relationships: []
       }
