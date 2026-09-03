@@ -5,22 +5,22 @@ import { parseTimeOfDay } from '@/shared/lib/time'
 import { buildMealTimeline } from './timeline'
 
 const MEALS = [
-  { id: 'cafe', timeFasted: '08:30', timeEvening: '09:00' },
-  { id: 'almoco', timeFasted: '12:00', timeEvening: '12:00' },
-  { id: 'lanche', timeFasted: '15:30', timeEvening: '15:30' },
-  { id: 'jantar', timeFasted: '19:30', timeEvening: '19:30' },
-  { id: 'ceia', timeFasted: '21:00', timeEvening: '21:00' },
+  { id: 'cafe', time: '08:30' },
+  { id: 'almoco', time: '12:00' },
+  { id: 'lanche', time: '15:30' },
+  { id: 'jantar', time: '19:30' },
+  { id: 'ceia', time: '21:00' },
 ]
 
-function statuses(schedule: 'manha_jejum' | 'tarde_noite', time: string) {
-  return buildMealTimeline(MEALS, schedule, parseTimeOfDay(time)).map(
+function statuses(time: string) {
+  return buildMealTimeline(MEALS, parseTimeOfDay(time)).map(
     (entry) => [entry.meal.id, entry.status] as const,
   )
 }
 
 describe('buildMealTimeline', () => {
   it('destaca a refeição do horário atual', () => {
-    expect(statuses('manha_jejum', '16:10')).toEqual([
+    expect(statuses('16:10')).toEqual([
       ['cafe', 'passada'],
       ['almoco', 'passada'],
       ['lanche', 'agora'],
@@ -29,20 +29,17 @@ describe('buildMealTimeline', () => {
     ])
   })
 
-  it('usa o horário da distribuição escolhida', () => {
-    // Às 08:45 o café já começou na versão de jejum, mas ainda não na outra.
-    expect(statuses('manha_jejum', '08:45')[0]).toEqual(['cafe', 'agora'])
-    expect(statuses('tarde_noite', '08:45')[0]).toEqual(['cafe', 'proxima'])
+  it('a refeição corrente começa no seu horário', () => {
+    expect(statuses('08:29')[0]).toEqual(['cafe', 'proxima'])
+    expect(statuses('08:30')[0]).toEqual(['cafe', 'agora'])
   })
 
   it('mantém a última refeição em destaque até a virada do dia', () => {
-    const timeline = statuses('manha_jejum', '23:50')
-
-    expect(timeline.at(-1)).toEqual(['ceia', 'agora'])
+    expect(statuses('23:50').at(-1)).toEqual(['ceia', 'agora'])
   })
 
   it('antes da primeira refeição nada está acontecendo, mas a próxima é conhecida', () => {
-    expect(statuses('manha_jejum', '06:00')).toEqual([
+    expect(statuses('06:00')).toEqual([
       ['cafe', 'proxima'],
       ['almoco', 'futura'],
       ['lanche', 'futura'],
@@ -52,8 +49,7 @@ describe('buildMealTimeline', () => {
   })
 
   it('devolve as refeições em ordem de horário, não de cadastro', () => {
-    const shuffled = [...MEALS].reverse()
-    const timeline = buildMealTimeline(shuffled, 'manha_jejum', parseTimeOfDay('12:30'))
+    const timeline = buildMealTimeline([...MEALS].reverse(), parseTimeOfDay('12:30'))
 
     expect(timeline.map((entry) => entry.meal.id)).toEqual([
       'cafe',
@@ -65,6 +61,6 @@ describe('buildMealTimeline', () => {
   })
 
   it('lida com um plano sem refeições', () => {
-    expect(buildMealTimeline([], 'manha_jejum', 600)).toEqual([])
+    expect(buildMealTimeline([], 600)).toEqual([])
   })
 })

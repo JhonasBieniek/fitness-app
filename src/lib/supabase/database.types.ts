@@ -249,8 +249,7 @@ export type Database = {
           plan_id: string
           position: number
           protein_g: number | null
-          time_evening: string
-          time_fasted: string
+          time: string
         }
         Insert: {
           id?: string
@@ -260,8 +259,7 @@ export type Database = {
           plan_id: string
           position: number
           protein_g?: number | null
-          time_evening: string
-          time_fasted: string
+          time: string
         }
         Update: {
           id?: string
@@ -271,8 +269,7 @@ export type Database = {
           plan_id?: string
           position?: number
           protein_g?: number | null
-          time_evening?: string
-          time_fasted?: string
+          time?: string
         }
         Relationships: [
           {
@@ -323,7 +320,6 @@ export type Database = {
         Row: {
           birth_date: string | null
           created_at: string
-          default_meal_schedule: Database['public']['Enums']['meal_schedule']
           display_name: string
           height_cm: number | null
           id: string
@@ -335,7 +331,6 @@ export type Database = {
         Insert: {
           birth_date?: string | null
           created_at?: string
-          default_meal_schedule?: Database['public']['Enums']['meal_schedule']
           display_name: string
           height_cm?: number | null
           id: string
@@ -347,7 +342,6 @@ export type Database = {
         Update: {
           birth_date?: string | null
           created_at?: string
-          default_meal_schedule?: Database['public']['Enums']['meal_schedule']
           display_name?: string
           height_cm?: number | null
           id?: string
@@ -539,7 +533,6 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      meal_schedule: 'manha_jejum' | 'tarde_noite'
       training_level: 'iniciante' | 'intermediario' | 'avancado'
     }
     CompositeTypes: {
@@ -665,7 +658,6 @@ export const Constants = {
   },
   public: {
     Enums: {
-      meal_schedule: ['manha_jejum', 'tarde_noite'],
       training_level: ['iniciante', 'intermediario', 'avancado'],
     },
   },

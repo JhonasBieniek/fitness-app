@@ -96,8 +96,8 @@ begin
   values (v_user, 'Plano de ganho de massa', 2430, 175, 110, 295, 60, 2.2, 2.7)
   returning id into v_plan;
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 1, 'Café da manhã', '08:30', '09:00', 520, 24, 'Na versão de manhã, é a primeira refeição do dia, logo depois do treino.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 1, 'Café da manhã', '08:30', 520, 24, null)
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -111,8 +111,8 @@ begin
     (v_option, 4, 'Leite integral', '200 ml', null),
     (v_option, 5, 'Creatina', '3 g', 'Com água. O horário não muda o efeito');
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 2, 'Almoço', '12:00', '12:00', 520, 41, null)
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 2, 'Almoço', '12:00', 520, 41, null)
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -126,8 +126,8 @@ begin
     (v_option, 4, 'Feijão', '100 g', 'Não é opcional para ela: é o ferro do dia'),
     (v_option, 5, 'Azeite', '5 g', 'Cru, por cima');
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 3, 'Lanche', '15:30', '15:30', 430, 30, 'Se treinar à tarde, este é o pré-treino: faça 60 a 90 min antes.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 3, 'Lanche', '15:30', 430, 30, 'Se treinar à tarde, este é o pré-treino: faça 60 a 90 min antes.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -160,8 +160,8 @@ begin
     (v_option, 3, 'Aveia em flocos', '30 g', null),
     (v_option, 4, 'Pasta de amendoim', '15 g', null);
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 4, 'Jantar', '19:30', '19:30', 520, 41, 'Se treinar à tarde, é o pós-treino.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 4, 'Jantar', '19:30', 520, 41, 'Se treinar à tarde, é o pós-treino.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -185,8 +185,8 @@ begin
     (v_option, 3, 'Queijo branco', '20 g', null),
     (v_option, 4, 'Alface, tomate, cebola', 'à vontade', null);
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 5, 'Ceia', '21:00', '21:00', 460, 34, 'Líquida e doce de propósito: é a refeição que entra mesmo sem fome.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 5, 'Ceia', '21:00', 460, 34, 'Líquida e doce de propósito: é a refeição que entra mesmo sem fome.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -238,10 +238,7 @@ Frutas: banana, maçã, mamão, melão, manga, abacaxi, laranja, morango, uva.
 
 Legumes e verduras: alface, rúcula, agrião, tomate, pepino, cenoura, beterraba, abobrinha, chuchu, brócolis, couve-flor, vagem, berinjela.
 
-Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.'),
-    (v_plan, 'jejum', 1, 'Treino em jejum', 'O café da manhã é a primeira refeição do dia, logo depois do treino. São as mesmas 5 refeições, só com o café mais tarde.
-
-Se aparecer tontura, cair a carga na barra ou faltar força nas últimas séries, adiante a fruta do café (1 banana) para 20 minutos antes de treinar. Ela sai do café, não entra por cima: o total do dia não muda.');
+Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.');
 end $$;
 
 -- ===== ele (jhonas@bloco.local) =====
@@ -339,8 +336,8 @@ begin
   values (v_user, 'Plano de ganho de massa', 2700, 210, 160, 300, 60, 3.5, null)
   returning id into v_plan;
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 1, 'Café da manhã', '08:30', '09:00', 600, 30, 'Na versão de manhã, é a primeira refeição do dia, logo depois do treino.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 1, 'Café da manhã', '08:30', 600, 30, null)
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -354,8 +351,8 @@ begin
     (v_option, 4, 'Leite integral', '—', null),
     (v_option, 5, 'Creatina', '5 g', 'Com água. O horário não muda o efeito');
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 2, 'Almoço', '12:00', '12:00', 620, 55, null)
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 2, 'Almoço', '12:00', 620, 55, null)
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -369,8 +366,8 @@ begin
     (v_option, 4, 'Feijão', '100 g', 'Não é opcional para ela: é o ferro do dia'),
     (v_option, 5, 'Azeite', '—', 'Cru, por cima');
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 3, 'Lanche', '15:30', '15:30', 520, 45, 'Se treinar à tarde, este é o pré-treino: faça 60 a 90 min antes.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 3, 'Lanche', '15:30', 520, 45, 'Se treinar à tarde, este é o pré-treino: faça 60 a 90 min antes.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -403,8 +400,8 @@ begin
     (v_option, 3, 'Aveia em flocos', '40 g', null),
     (v_option, 4, 'Pasta de amendoim', '20 g', null);
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 4, 'Jantar', '19:30', '19:30', 620, 55, 'Se treinar à tarde, é o pós-treino.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 4, 'Jantar', '19:30', 620, 55, 'Se treinar à tarde, é o pós-treino.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -428,8 +425,8 @@ begin
     (v_option, 3, 'Queijo branco', '20 g', null),
     (v_option, 4, 'Alface, tomate, cebola', 'à vontade', null);
 
-  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)
-  values (v_plan, 5, 'Ceia', '21:00', '21:00', 500, 38, 'Líquida e doce de propósito: é a refeição que entra mesmo sem fome.')
+  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
+  values (v_plan, 5, 'Ceia', '21:00', 500, 38, 'Líquida e doce de propósito: é a refeição que entra mesmo sem fome.')
   returning id into v_meal;
 
   insert into public.meal_options (meal_id, position, label, note)
@@ -481,8 +478,5 @@ Frutas: banana, maçã, mamão, melão, manga, abacaxi, laranja, morango, uva.
 
 Legumes e verduras: alface, rúcula, agrião, tomate, pepino, cenoura, beterraba, abobrinha, chuchu, brócolis, couve-flor, vagem, berinjela.
 
-Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.'),
-    (v_plan, 'jejum', 1, 'Treino em jejum', 'O café da manhã é a primeira refeição do dia, logo depois do treino. São as mesmas 5 refeições, só com o café mais tarde.
-
-Se aparecer tontura, cair a carga na barra ou faltar força nas últimas séries, adiante a fruta do café (1 banana) para 20 minutos antes de treinar. Ela sai do café, não entra por cima: o total do dia não muda.');
+Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.');
 end $$;

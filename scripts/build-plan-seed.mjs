@@ -298,11 +298,10 @@ const MEALS = [
   {
     position: 1,
     name: 'Café da manhã',
-    timeFasted: '08:30',
-    timeEvening: '09:00',
+    time: '08:30',
     kcal: { [ELA]: 520, [ELE]: 600 },
     protein: { [ELA]: 24, [ELE]: 30 },
-    note: 'Na versão de manhã, é a primeira refeição do dia, logo depois do treino.',
+    note: null,
     options: [
       {
         items: [
@@ -318,8 +317,7 @@ const MEALS = [
   {
     position: 2,
     name: 'Almoço',
-    timeFasted: '12:00',
-    timeEvening: '12:00',
+    time: '12:00',
     kcal: { [ELA]: 520, [ELE]: 620 },
     protein: { [ELA]: 41, [ELE]: 55 },
     note: null,
@@ -350,8 +348,7 @@ const MEALS = [
   {
     position: 3,
     name: 'Lanche',
-    timeFasted: '15:30',
-    timeEvening: '15:30',
+    time: '15:30',
     kcal: { [ELA]: 430, [ELE]: 520 },
     protein: { [ELA]: 30, [ELE]: 45 },
     note: 'Se treinar à tarde, este é o pré-treino: faça 60 a 90 min antes.',
@@ -397,8 +394,7 @@ const MEALS = [
   {
     position: 4,
     name: 'Jantar',
-    timeFasted: '19:30',
-    timeEvening: '19:30',
+    time: '19:30',
     kcal: { [ELA]: 520, [ELE]: 620 },
     protein: { [ELA]: 41, [ELE]: 55 },
     note: 'Se treinar à tarde, é o pós-treino.',
@@ -435,8 +431,7 @@ const MEALS = [
   {
     position: 5,
     name: 'Ceia',
-    timeFasted: '21:00',
-    timeEvening: '21:00',
+    time: '21:00',
     kcal: { [ELA]: 460, [ELE]: 500 },
     protein: { [ELA]: 34, [ELE]: 38 },
     note: 'Líquida e doce de propósito: é a refeição que entra mesmo sem fome.',
@@ -481,13 +476,6 @@ const RULES = [
       [ELA]: '3 g todo dia, com água, sem interrupção.',
       [ELE]: '5 g todo dia, com água, sem interrupção.',
     },
-  ],
-]
-
-const FASTING = [
-  [
-    'Treino em jejum',
-    'O café da manhã é a primeira refeição do dia, logo depois do treino. São as mesmas 5 refeições, só com o café mais tarde.\n\nSe aparecer tontura, cair a carga na barra ou faltar força nas últimas séries, adiante a fruta do café (1 banana) para 20 minutos antes de treinar. Ela sai do café, não entra por cima: o total do dia não muda.',
   ],
 ]
 
@@ -588,11 +576,9 @@ for (const email of [ELA, ELE]) {
   say('')
 
   for (const meal of MEALS) {
+    say('  insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)')
     say(
-      '  insert into public.meals (plan_id, position, name, time_fasted, time_evening, kcal, protein_g, note)',
-    )
-    say(
-      `  values (v_plan, ${meal.position}, ${q(meal.name)}, ${q(meal.timeFasted)}, ${q(meal.timeEvening)}, ` +
+      `  values (v_plan, ${meal.position}, ${q(meal.name)}, ${q(meal.time)}, ` +
         `${meal.kcal[email]}, ${meal.protein[email]}, ${q(meal.note)})`,
     )
     say('  returning id into v_meal;')
@@ -625,9 +611,6 @@ for (const email of [ELA, ELE]) {
     ),
     ...DETAILS.map(
       ([title, body], index) => `    (v_plan, 'detalhe', ${index + 1}, ${q(title)}, ${q(body)})`,
-    ),
-    ...FASTING.map(
-      ([title, body], index) => `    (v_plan, 'jejum', ${index + 1}, ${q(title)}, ${q(body)})`,
     ),
   ]
   say(noteRows.join(',\n') + ';')

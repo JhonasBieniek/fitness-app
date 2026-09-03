@@ -1,12 +1,8 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
 
-import { buildMealTimeline, type MealSchedule } from '@/features/nutrition/domain/timeline'
-import { FastingNote } from '@/features/nutrition/components/fasting-note'
+import { buildMealTimeline } from '@/features/nutrition/domain/timeline'
 import { MealTimeline } from '@/features/nutrition/components/meal-timeline'
 import { PlanDetails } from '@/features/nutrition/components/plan-details'
-import { ScheduleToggle } from '@/features/nutrition/components/schedule-toggle'
-import { SCHEDULE_COOKIE } from '@/features/nutrition/server/cookies'
 import { getActiveMealPlan } from '@/features/nutrition/server/queries'
 import { getProfile } from '@/features/profile/server/queries'
 import { publicEnv } from '@/lib/env'
@@ -26,11 +22,7 @@ function formatLiters(value: number) {
 }
 
 export default async function DietaPage() {
-  const [profile, plan, cookieStore] = await Promise.all([
-    getProfile(),
-    getActiveMealPlan(),
-    cookies(),
-  ])
+  const [profile, plan] = await Promise.all([getProfile(), getActiveMealPlan()])
 
   if (!plan) {
     return (
@@ -43,14 +35,8 @@ export default async function DietaPage() {
     )
   }
 
-  const saved = cookieStore.get(SCHEDULE_COOKIE)?.value
-  const schedule: MealSchedule =
-    saved === 'manha_jejum' || saved === 'tarde_noite'
-      ? saved
-      : (profile?.defaultMealSchedule ?? 'manha_jejum')
-
   const now = zonedNow(new Date(), profile?.timeZone ?? publicEnv().NEXT_PUBLIC_APP_TIMEZONE)
-  const timeline = buildMealTimeline(plan.meals, schedule, now.minutesOfDay)
+  const timeline = buildMealTimeline(plan.meals, now.minutesOfDay)
 
   // Abre na refeição do momento. Antes da primeira do dia, na que vem.
   const focusedIndex = Math.max(
@@ -74,16 +60,6 @@ export default async function DietaPage() {
       </header>
 
       <MealTimeline entries={timeline} initialIndex={focusedIndex} />
-
-      {schedule === 'manha_jejum' && plan.fastingNote ? (
-        <FastingNote title={plan.fastingNote.title} body={plan.fastingNote.body} />
-      ) : null}
-
-      {/*
-        O alternador de horário fica depois da comida, não antes: ele é ajuste,
-        e se abre a tela ocupando a primeira dobra no lugar da refeição.
-      */}
-      <ScheduleToggle schedule={schedule} />
 
       {/*
         Metas do dia em uma faixa de quatro números. Elas são referência do
