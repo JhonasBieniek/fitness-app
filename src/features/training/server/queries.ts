@@ -10,7 +10,10 @@ export type ExerciseVariant = {
   primaryMuscle: string
   mediaStart: string | null
   mediaEnd: string | null
+  /** Animação licenciada, quando houver. Tem precedência sobre as fotos. */
+  mediaLoop: string | null
   cue: string | null
+  steps: string[]
 }
 
 export type TrainingExercise = {
@@ -61,7 +64,9 @@ type ExerciseRow = {
   primary_muscle: string
   media_start_path: string | null
   media_end_path: string | null
+  media_loop_path: string | null
   cue: string | null
+  steps: string[] | null
 }
 
 function toVariant(row: ExerciseRow | null): ExerciseVariant | null {
@@ -75,12 +80,14 @@ function toVariant(row: ExerciseRow | null): ExerciseVariant | null {
     primaryMuscle: row.primary_muscle,
     mediaStart: row.media_start_path,
     mediaEnd: row.media_end_path,
+    mediaLoop: row.media_loop_path,
     cue: row.cue,
+    steps: row.steps ?? [],
   }
 }
 
 const EXERCISE_FIELDS =
-  'id, slug, name, equipment, primary_muscle, media_start_path, media_end_path, cue'
+  'id, slug, name, equipment, primary_muscle, media_start_path, media_end_path, media_loop_path, cue, steps'
 
 /**
  * Bloco ativo com todos os dias e a prescrição de cada exercício.

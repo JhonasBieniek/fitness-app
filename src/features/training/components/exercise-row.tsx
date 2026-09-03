@@ -8,7 +8,7 @@ import { saveExerciseLog } from '@/features/training/server/actions'
 import type { ExerciseVariant, LastLoad } from '@/features/training/server/queries'
 import { cn } from '@/shared/lib/cn'
 
-import { ExerciseMedia } from './exercise-media'
+import { ExerciseSheet } from './exercise-sheet'
 
 type ExerciseRowProps = {
   dayExerciseId: string
@@ -80,11 +80,15 @@ export function ExerciseRow({
         isDropped && 'opacity-55',
       )}
     >
-      <ExerciseMedia
+      <ExerciseSheet
         name={variant.name}
+        equipment={variant.equipment}
+        primaryMuscle={variant.primaryMuscle}
         cue={variant.cue}
+        steps={variant.steps}
         start={variant.mediaStart}
         end={variant.mediaEnd}
+        loop={variant.mediaLoop}
       />
 
       <div className="min-w-0 flex-1">
