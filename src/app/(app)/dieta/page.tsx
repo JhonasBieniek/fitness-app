@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 
 import { buildMealTimeline, type MealSchedule } from '@/features/nutrition/domain/timeline'
 import { FastingNote } from '@/features/nutrition/components/fasting-note'
-import { MealCard } from '@/features/nutrition/components/meal-card'
+import { MealTimeline } from '@/features/nutrition/components/meal-timeline'
 import { PlanDetails } from '@/features/nutrition/components/plan-details'
 import { ScheduleToggle } from '@/features/nutrition/components/schedule-toggle'
 import { SCHEDULE_COOKIE } from '@/features/nutrition/server/cookies'
@@ -52,48 +52,56 @@ export default async function DietaPage() {
   const now = zonedNow(new Date(), profile?.timeZone ?? publicEnv().NEXT_PUBLIC_APP_TIMEZONE)
   const timeline = buildMealTimeline(plan.meals, schedule, now.minutesOfDay)
 
-  // Abre a refeição do momento. Antes da primeira do dia, abre a que vem.
-  const hasCurrent = timeline.some((entry) => entry.status === 'agora')
-  const openStatus = hasCurrent ? 'agora' : 'proxima'
-
+  // Abre na refeição do momento. Antes da primeira do dia, na que vem.
+  const focusedIndex = Math.max(
+    0,
+    timeline.findIndex((entry) => entry.status === 'agora' || entry.status === 'proxima'),
+  )
   const macros = [
-    { value: formatNumber(plan.kcalTarget), unit: '', label: 'kcal por dia' },
+    { value: formatNumber(plan.kcalTarget), unit: '', label: 'kcal' },
     { value: formatNumber(plan.proteinG), unit: 'g', label: 'proteína' },
-    { value: formatNumber(plan.carbG), unit: 'g', label: 'carboidrato' },
+    { value: formatNumber(plan.carbG), unit: 'g', label: 'carbo' },
     { value: formatNumber(plan.fatG), unit: 'g', label: 'gordura' },
   ]
 
   return (
-    <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-6">
-      <header className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-[20px] leading-tight font-semibold tracking-tight">Alimentação</h1>
-          <p className="text-ink-3 tabular font-mono text-[12px]">
-            agora {formatTimeOfDay(now.minutesOfDay)}
-          </p>
-        </div>
-
-        <ScheduleToggle schedule={schedule} />
+    <main className="flex flex-1 flex-col gap-5 px-4 pt-4 pb-6">
+      <header className="flex items-baseline justify-between gap-3">
+        <h1 className="text-[20px] leading-tight font-semibold tracking-tight">Alimentação</h1>
+        <p className="text-ink-3 tabular font-mono text-[12px]">
+          agora {formatTimeOfDay(now.minutesOfDay)}
+        </p>
       </header>
 
+      <MealTimeline entries={timeline} initialIndex={focusedIndex} />
+
+      {schedule === 'manha_jejum' && plan.fastingNote ? (
+        <FastingNote title={plan.fastingNote.title} body={plan.fastingNote.body} />
+      ) : null}
+
       {/*
-        Metas do dia em um bloco só, separadas por fios. Quatro caixas soltas
-        pesariam mais que os quatro números que elas carregam.
+        O alternador de horário fica depois da comida, não antes: ele é ajuste,
+        e se abre a tela ocupando a primeira dobra no lugar da refeição.
+      */}
+      <ScheduleToggle schedule={schedule} />
+
+      {/*
+        Metas do dia em uma faixa de quatro números. Elas são referência do
+        plano, não a pergunta que a tela responde, então não abrem a rota.
       */}
       <section aria-label="Metas do dia">
-        <dl className="border-line bg-surface rounded-card grid grid-cols-2 overflow-hidden border">
-          {macros.map((macro, index) => (
-            <div
-              key={macro.label}
-              className={`border-line px-3.5 py-3 ${index % 2 === 0 ? 'border-r' : ''} ${index < 2 ? 'border-b' : ''}`}
-            >
-              <dd className="tabular font-mono text-[21px] leading-none font-medium">
+        <h2 className="text-ink-2 mb-1.5 text-[11.5px] font-medium tracking-wide uppercase">
+          Metas do dia
+        </h2>
+
+        <dl className="divide-line border-line flex divide-x border-y py-2.5">
+          {macros.map((macro) => (
+            <div key={macro.label} className="flex-1 px-2 text-center first:pl-0 last:pr-0">
+              <dd className="tabular font-mono text-[17px] leading-none font-medium">
                 {macro.value}
-                {macro.unit ? <span className="text-ink-2 text-[15px]"> {macro.unit}</span> : null}
+                {macro.unit ? <span className="text-ink-3 text-[11px]"> {macro.unit}</span> : null}
               </dd>
-              <dt className="text-ink-2 mt-1.5 text-[11.5px] leading-none tracking-wide uppercase">
-                {macro.label}
-              </dt>
+              <dt className="text-ink-3 mt-1.5 text-[11px] leading-none">{macro.label}</dt>
             </div>
           ))}
         </dl>
@@ -105,35 +113,21 @@ export default async function DietaPage() {
         </p>
       </section>
 
-      {schedule === 'manha_jejum' && plan.fastingNote ? (
-        <FastingNote title={plan.fastingNote.title} body={plan.fastingNote.body} />
-      ) : null}
-
-      <section aria-label="Refeições do dia">
-        <ul className="flex flex-col gap-2">
-          {timeline.map((entry) => (
-            <MealCard
-              key={entry.meal.id}
-              meal={entry.meal}
-              time={entry.time}
-              status={entry.status}
-              defaultOpen={entry.status === openStatus}
-            />
-          ))}
-        </ul>
-      </section>
-
       {plan.rules.length > 0 ? (
         <section aria-label="Regras do plano">
-          <h2 className="text-ink-2 mb-2 text-[11.5px] font-medium tracking-wide uppercase">
+          <h2 className="text-ink-2 mb-1 text-[11.5px] font-medium tracking-wide uppercase">
             Regras
           </h2>
 
-          <dl className="grid grid-cols-2 gap-2">
+          {/*
+            Fios em vez de cartões: são seis frases curtas, e seis caixas
+            desenhariam uma grade de alturas desiguais para não dizer mais nada.
+          */}
+          <dl className="divide-line divide-y">
             {plan.rules.map((rule) => (
-              <div key={rule.id} className="border-line bg-surface rounded-card border px-3 py-2.5">
-                <dt className="text-[13px] font-semibold">{rule.title}</dt>
-                <dd className="text-ink-2 mt-1 text-[12.5px] leading-snug">{rule.body}</dd>
+              <div key={rule.id} className="flex items-baseline gap-3 py-2.5">
+                <dt className="w-24 shrink-0 text-[13px] font-semibold">{rule.title}</dt>
+                <dd className="text-ink-2 flex-1 text-[13px] leading-snug">{rule.body}</dd>
               </div>
             ))}
           </dl>
