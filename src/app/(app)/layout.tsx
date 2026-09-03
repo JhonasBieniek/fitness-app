@@ -1,26 +1,18 @@
 import { requireUser } from '@/features/auth/server/session'
-import { signOut } from '@/features/auth/server/actions'
+import { BottomNav } from '@/shared/ui/bottom-nav'
 
+/**
+ * Casca da área autenticada. Largura travada em `max-w-md` porque o app é feito
+ * para o celular: esticar as listas em um monitor largo não melhora nada e só
+ * afasta o conteúdo do canto onde a pessoa está olhando.
+ */
 export default async function AppLayout({ children }: LayoutProps<'/'>) {
-  const user = await requireUser()
+  await requireUser()
 
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="border-border flex items-center justify-between border-b px-4 py-3">
-        <span className="text-sm font-semibold tracking-tight">Treino &amp; Dieta</span>
-
-        <form action={signOut} className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm">{user.displayName}</span>
-          <button
-            type="submit"
-            className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-          >
-            Sair
-          </button>
-        </form>
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">{children}</main>
+    <div className="flex min-h-[100dvh] flex-col">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col">{children}</div>
+      <BottomNav />
     </div>
   )
 }

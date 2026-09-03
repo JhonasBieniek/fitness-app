@@ -51,3 +51,4 @@ next-env.d.ts
 
 # claude code
 .claude/settings.local.json
+.claude/launch.json
