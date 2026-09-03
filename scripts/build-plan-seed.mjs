@@ -309,7 +309,6 @@ const MEALS = [
           ['Ovos', { [ELA]: '2 un.', [ELE]: '3 un.' }, 'Ou queijo minas: 60 g / 80 g'],
           ['Fruta', { [ELA]: '2 porções', [ELE]: '2 porções' }, null],
           ['Leite integral', { [ELA]: '200 ml', [ELE]: '—' }, null],
-          ['Creatina', { [ELA]: '3 g', [ELE]: '5 g' }, 'Com água. O horário não muda o efeito'],
         ],
       },
     ],

@@ -108,8 +108,7 @@ begin
     (v_option, 1, 'Pão', '50 g', 'Qualquer um, menos frito'),
     (v_option, 2, 'Ovos', '2 un.', 'Ou queijo minas: 60 g / 80 g'),
     (v_option, 3, 'Fruta', '2 porções', null),
-    (v_option, 4, 'Leite integral', '200 ml', null),
-    (v_option, 5, 'Creatina', '3 g', 'Com água. O horário não muda o efeito');
+    (v_option, 4, 'Leite integral', '200 ml', null);
 
   insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
   values (v_plan, 2, 'Almoço', '12:00', 520, 41, null)
@@ -348,8 +347,7 @@ begin
     (v_option, 1, 'Pão', '60 g', 'Qualquer um, menos frito'),
     (v_option, 2, 'Ovos', '3 un.', 'Ou queijo minas: 60 g / 80 g'),
     (v_option, 3, 'Fruta', '2 porções', null),
-    (v_option, 4, 'Leite integral', '—', null),
-    (v_option, 5, 'Creatina', '5 g', 'Com água. O horário não muda o efeito');
+    (v_option, 4, 'Leite integral', '—', null);
 
   insert into public.meals (plan_id, position, name, time, kcal, protein_g, note)
   values (v_plan, 2, 'Almoço', '12:00', 620, 55, null)
