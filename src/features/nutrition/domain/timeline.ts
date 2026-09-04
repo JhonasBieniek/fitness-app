@@ -7,25 +7,19 @@
 
 import { parseTimeOfDay, resolveSlot, type MinutesOfDay } from '@/shared/lib/time'
 
-export const MEAL_SCHEDULES = ['manha_jejum', 'tarde_noite'] as const
-
-export type MealSchedule = (typeof MEAL_SCHEDULES)[number]
-
 export type MealStatus = 'passada' | 'agora' | 'proxima' | 'futura'
 
 export type TimedMeal<T> = {
   meal: T
-  /** Horário desta refeição na distribuição escolhida. */
   time: string
   minutes: MinutesOfDay
   status: MealStatus
 }
 
-export type MealTimes = { timeFasted: string; timeEvening: string }
+export type MealTimes = { time: string }
 
 /**
- * Ordena as refeições pelo horário da distribuição escolhida e marca o estado
- * de cada uma.
+ * Ordena as refeições por horário e marca o estado de cada uma.
  *
  * A refeição corrente vale até o horário da seguinte, e não por uma janela
  * fixa: entre uma e outra alguma refeição precisa estar em destaque, senão a
@@ -33,14 +27,13 @@ export type MealTimes = { timeFasted: string; timeEvening: string }
  */
 export function buildMealTimeline<T extends MealTimes>(
   meals: readonly T[],
-  schedule: MealSchedule,
   minutesOfDay: MinutesOfDay,
 ): TimedMeal<T>[] {
-  const slots = meals.map((meal) => {
-    const time = schedule === 'manha_jejum' ? meal.timeFasted : meal.timeEvening
-
-    return { meal, time, startMinutes: parseTimeOfDay(time) }
-  })
+  const slots = meals.map((meal) => ({
+    meal,
+    time: meal.time,
+    startMinutes: parseTimeOfDay(meal.time),
+  }))
 
   const { current, next } = resolveSlot(slots, minutesOfDay)
 

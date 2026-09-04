@@ -20,10 +20,7 @@ export type Meal = {
   id: string
   position: number
   name: string
-  /** Horário na versão de treino em jejum. */
-  timeFasted: string
-  /** Horário na versão de treino à tarde ou à noite. */
-  timeEvening: string
+  time: string
   kcal: number | null
   proteinG: number | null
   note: string | null
@@ -32,7 +29,7 @@ export type Meal = {
 
 export type PlanNote = {
   id: string
-  kind: 'regra' | 'detalhe' | 'jejum'
+  kind: 'regra' | 'detalhe'
   title: string
   body: string
 }
@@ -50,8 +47,6 @@ export type MealPlan = {
   meals: Meal[]
   rules: PlanNote[]
   details: PlanNote[]
-  /** Só aparece na distribuição de treino em jejum. */
-  fastingNote: PlanNote | null
 }
 
 /** `'08:30:00'` do Postgres vira `'08:30'`. */
@@ -67,7 +62,7 @@ export async function getActiveMealPlan(): Promise<MealPlan | null> {
     .select(
       `id, name, kcal_target, protein_g, protein_min_g, carb_g, fat_g, water_min_l, water_max_l,
        meals (
-         id, position, name, time_fasted, time_evening, kcal, protein_g, note,
+         id, position, name, time, kcal, protein_g, note,
          meal_options ( id, position, label, note, meal_items ( id, position, name, amount, note ) )
        ),
        plan_notes ( id, kind, position, title, body )`,
@@ -107,8 +102,7 @@ export async function getActiveMealPlan(): Promise<MealPlan | null> {
         id: meal.id,
         position: meal.position,
         name: meal.name,
-        timeFasted: trimTime(meal.time_fasted),
-        timeEvening: trimTime(meal.time_evening),
+        time: trimTime(meal.time),
         kcal: meal.kcal,
         proteinG: meal.protein_g,
         note: meal.note,
@@ -132,6 +126,5 @@ export async function getActiveMealPlan(): Promise<MealPlan | null> {
       })),
     rules: notes.filter((note) => note.kind === 'regra'),
     details: notes.filter((note) => note.kind === 'detalhe'),
-    fastingNote: notes.find((note) => note.kind === 'jejum') ?? null,
   }
 }

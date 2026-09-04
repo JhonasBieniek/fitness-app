@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
+    "db:types:local": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "verify": "npm run typecheck && npm run lint && npm run test",
