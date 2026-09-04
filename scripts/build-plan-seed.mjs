@@ -51,22 +51,22 @@ const TRAINING_DAYS = [
         '8–10',
         120,
         'Goblet squat até a semana 4, barra a partir da 5.',
-        3,
+        null,
         '6–8',
         false,
       ],
       [
         'leg-press-45',
         'leg-press-45',
-        2,
+        3,
         '10–12',
         90,
         'Pés na altura média, sem tirar a lombar do encosto.',
-        3,
+        null,
         null,
         false,
       ],
-      ['cadeira-extensora', 'cadeira-extensora', 2, '12–15', 60, null, 3, null, false],
+      ['cadeira-extensora', 'cadeira-extensora', 3, '12–15', 60, null, null, null, false],
       ['panturrilha-em-pe', 'panturrilha-em-pe', 3, '12–15', 60, null, null, null, false],
     ],
   },
@@ -74,7 +74,7 @@ const TRAINING_DAYS = [
     weekday: 2,
     title: 'Superiores',
     focus: 'Costas e peito',
-    duration: 45,
+    duration: 50,
     exercises: [
       [
         'remada-curvada-halteres',
@@ -99,8 +99,8 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['triceps-polia', 'triceps-polia', 2, '10–12', 60, null, null, null, false],
-      ['rosca-halteres', 'rosca-maquina', 2, '10–12', 60, null, null, null, false],
+      ['triceps-polia', 'triceps-polia', 3, '10–12', 60, null, null, null, false],
+      ['rosca-halteres', 'rosca-maquina', 3, '10–12', 60, null, null, null, false],
       ['abdominal-solo', 'abdominal-maquina', 3, '12–15', 60, null, null, null, false],
     ],
   },
@@ -117,7 +117,7 @@ const TRAINING_DAYS = [
         '8–10',
         120,
         'Pull-through nas 4 primeiras semanas ensina o padrão sem carga na coluna.',
-        3,
+        null,
         '6–8',
         false,
       ],
@@ -135,11 +135,11 @@ const TRAINING_DAYS = [
       [
         'extensao-45-gluteo',
         'extensao-45-gluteo',
-        2,
+        3,
         '12–15',
         75,
         'Anilha no peito quando 15 ficarem fáceis.',
-        3,
+        null,
         null,
         false,
       ],
@@ -154,14 +154,24 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['abducao-polia', 'cadeira-abdutora', 2, '15–20', 60, null, 3, null, false],
+      [
+        'abducao-polia',
+        'cadeira-abdutora',
+        3,
+        '15–20',
+        60,
+        'Três segundos na volta, tronco uns 30° à frente.',
+        null,
+        null,
+        false,
+      ],
     ],
   },
   {
     weekday: 4,
     title: 'Superiores',
     focus: 'Ombro e braço',
-    duration: 45,
+    duration: 50,
     exercises: [
       [
         'supino-inclinado-halteres',
@@ -178,7 +188,7 @@ const TRAINING_DAYS = [
       [
         'desenvolvimento-halteres',
         'desenvolvimento-maquina',
-        2,
+        3,
         '8–10',
         90,
         null,
@@ -186,7 +196,7 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['crucifixo-inverso', 'crucifixo-inverso-maquina', 2, '12–15', 60, null, null, null, false],
+      ['crucifixo-inverso', 'crucifixo-inverso-maquina', 3, '12–15', 60, null, null, null, false],
       [
         'elevacao-lateral',
         'elevacao-lateral',
@@ -198,8 +208,28 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['rosca-alternada', 'rosca-maquina', 2, '10–12', 60, null, null, null, false],
-      ['triceps-testa', 'triceps-polia', 1, '10–12', 60, null, null, null, false],
+      [
+        'rosca-alternada',
+        'rosca-maquina',
+        2,
+        '10–12',
+        60,
+        'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.',
+        null,
+        null,
+        false,
+      ],
+      [
+        'triceps-testa',
+        'triceps-polia',
+        2,
+        '10–12',
+        60,
+        'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.',
+        null,
+        null,
+        false,
+      ],
       [
         'prancha',
         'prancha',
@@ -217,7 +247,7 @@ const TRAINING_DAYS = [
     weekday: 5,
     title: 'Glúteo',
     focus: 'Unilateral e metabólico',
-    duration: 50,
+    duration: 55,
     exercises: [
       [
         'bulgaro',
@@ -225,7 +255,7 @@ const TRAINING_DAYS = [
         3,
         '8–10 por perna',
         90,
-        'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo.',
+        'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo. Sozinha: leg press unilateral.',
         null,
         null,
         true,
@@ -233,10 +263,10 @@ const TRAINING_DAYS = [
       [
         'step-up',
         'leg-press-45',
-        2,
+        3,
         '10–12 por perna',
         90,
-        'Caixa na altura do joelho. Suba pelo calcanhar.',
+        'Caixa na altura do joelho. Suba pelo calcanhar. Sozinha: leg press com os pés altos.',
         null,
         null,
         true,
@@ -244,7 +274,7 @@ const TRAINING_DAYS = [
       [
         'hip-thrust-barra',
         'elevacao-pelvica-maquina',
-        2,
+        3,
         '12–15',
         60,
         'Uns 60% da carga de segunda. Descanso curto de propósito.',
@@ -252,7 +282,7 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['coice-polia', 'coice-maquina', 2, '12–15 por perna', 60, null, null, null, false],
+      ['coice-polia', 'coice-maquina', 3, '12–15 por perna', 60, null, null, null, false],
       [
         'abducao-polia',
         'cadeira-abdutora',
@@ -264,7 +294,7 @@ const TRAINING_DAYS = [
         null,
         false,
       ],
-      ['panturrilha-sentada', 'panturrilha-sentada', 2, '12–15', 60, null, null, null, false],
+      ['panturrilha-sentada', 'panturrilha-sentada', 3, '12–15', 60, null, null, null, false],
     ],
   },
 ]
@@ -529,6 +559,15 @@ for (const email of [ELA, ELE]) {
   say(`  select id into v_user from auth.users where email = ${q(email)};`)
   say('  if v_user is null then')
   say(`    raise notice 'Usuário % não existe, plano ignorado.', ${q(email)};`)
+  say('    return;')
+  say('  end if;')
+  say('')
+  // Rodar de novo não duplica nem apaga: workout_sessions e exercise_logs
+  // cascateiam a partir do bloco, então recriar o plano levaria junto o
+  // histórico de carga. Para reger, apague o bloco e o plano à mão.
+  say('  if exists (select 1 from public.training_blocks where user_id = v_user)')
+  say('     or exists (select 1 from public.meal_plans where user_id = v_user) then')
+  say(`    raise notice 'Usuário % já tem plano, seed ignorado.', ${q(email)};`)
   say('    return;')
   say('  end if;')
   say('')

@@ -17,6 +17,12 @@ begin
     return;
   end if;
 
+  if exists (select 1 from public.training_blocks where user_id = v_user)
+     or exists (select 1 from public.meal_plans where user_id = v_user) then
+    raise notice 'Usuário % já tem plano, seed ignorado.', 'ela@bloco.local';
+    return;
+  end if;
+
   insert into public.training_blocks (user_id, name, started_on, total_weeks)
   values (v_user, 'Bloco 1 — glúteo e pernas', '2026-09-07', 12)
   returning id into v_block;
@@ -29,13 +35,13 @@ begin
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
     (v_day, 1, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '8–10', 120, 'O exercício central da semana. Regra de +5 kg.', 4, '6–8', false),
-    (v_day, 2, (select id from public.exercises where slug = 'agachamento-livre'), (select id from public.exercises where slug = 'hack-squat'), 3, '8–10', 120, 'Goblet squat até a semana 4, barra a partir da 5.', 3, '6–8', false),
-    (v_day, 3, (select id from public.exercises where slug = 'leg-press-45'), (select id from public.exercises where slug = 'leg-press-45'), 2, '10–12', 90, 'Pés na altura média, sem tirar a lombar do encosto.', 3, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'cadeira-extensora'), (select id from public.exercises where slug = 'cadeira-extensora'), 2, '12–15', 60, null, 3, null, false),
+    (v_day, 2, (select id from public.exercises where slug = 'agachamento-livre'), (select id from public.exercises where slug = 'hack-squat'), 3, '8–10', 120, 'Goblet squat até a semana 4, barra a partir da 5.', null, '6–8', false),
+    (v_day, 3, (select id from public.exercises where slug = 'leg-press-45'), (select id from public.exercises where slug = 'leg-press-45'), 3, '10–12', 90, 'Pés na altura média, sem tirar a lombar do encosto.', null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'cadeira-extensora'), (select id from public.exercises where slug = 'cadeira-extensora'), 3, '12–15', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'panturrilha-em-pe'), (select id from public.exercises where slug = 'panturrilha-em-pe'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 2, 'Superiores', 'Costas e peito', 45)
+  values (v_block, 2, 'Superiores', 'Costas e peito', 50)
   returning id into v_day;
 
   insert into public.training_day_exercises
@@ -44,8 +50,8 @@ begin
     (v_day, 1, (select id from public.exercises where slug = 'remada-curvada-halteres'), (select id from public.exercises where slug = 'remada-baixa-sentada'), 3, '8–10', 90, 'Espessura e postura: puxe para o quadril, um segundo no final.', null, null, false),
     (v_day, 2, (select id from public.exercises where slug = 'supino-halteres'), (select id from public.exercises where slug = 'supino-maquina'), 3, '8–10', 90, null, null, null, false),
     (v_day, 3, (select id from public.exercises where slug = 'face-pull'), (select id from public.exercises where slug = 'face-pull'), 3, '12–15', 60, 'Entrou no lugar da puxada alta. É postura de ombro.', null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'triceps-polia'), (select id from public.exercises where slug = 'triceps-polia'), 2, '10–12', 60, null, null, null, false),
-    (v_day, 5, (select id from public.exercises where slug = 'rosca-halteres'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, null, null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'triceps-polia'), (select id from public.exercises where slug = 'triceps-polia'), 3, '10–12', 60, null, null, null, false),
+    (v_day, 5, (select id from public.exercises where slug = 'rosca-halteres'), (select id from public.exercises where slug = 'rosca-maquina'), 3, '10–12', 60, null, null, null, false),
     (v_day, 6, (select id from public.exercises where slug = 'abdominal-solo'), (select id from public.exercises where slug = 'abdominal-maquina'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
@@ -55,14 +61,14 @@ begin
   insert into public.training_day_exercises
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
-    (v_day, 1, (select id from public.exercises where slug = 'rdl-halteres'), (select id from public.exercises where slug = 'pull-through'), 3, '8–10', 120, 'Pull-through nas 4 primeiras semanas ensina o padrão sem carga na coluna.', 3, '6–8', false),
+    (v_day, 1, (select id from public.exercises where slug = 'rdl-halteres'), (select id from public.exercises where slug = 'pull-through'), 3, '8–10', 120, 'Pull-through nas 4 primeiras semanas ensina o padrão sem carga na coluna.', null, '6–8', false),
     (v_day, 2, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '10–12', 90, 'Uns 75% da carga de segunda. Mesma cadência.', null, null, false),
-    (v_day, 3, (select id from public.exercises where slug = 'extensao-45-gluteo'), (select id from public.exercises where slug = 'extensao-45-gluteo'), 2, '12–15', 75, 'Anilha no peito quando 15 ficarem fáceis.', 3, null, false),
+    (v_day, 3, (select id from public.exercises where slug = 'extensao-45-gluteo'), (select id from public.exercises where slug = 'extensao-45-gluteo'), 3, '12–15', 75, 'Anilha no peito quando 15 ficarem fáceis.', null, null, false),
     (v_day, 4, (select id from public.exercises where slug = 'cadeira-flexora-sentada'), (select id from public.exercises where slug = 'cadeira-flexora-sentada'), 3, '10–12', 90, null, null, null, false),
-    (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 2, '15–20', 60, null, 3, null, false);
+    (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 3, '15–20', 60, 'Três segundos na volta, tronco uns 30° à frente.', null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 4, 'Superiores', 'Ombro e braço', 45)
+  values (v_block, 4, 'Superiores', 'Ombro e braço', 50)
   returning id into v_day;
 
   insert into public.training_day_exercises
@@ -70,26 +76,26 @@ begin
   values
     (v_day, 1, (select id from public.exercises where slug = 'supino-inclinado-halteres'), (select id from public.exercises where slug = 'supino-inclinado-maquina'), 3, '8–10', 90, null, null, null, false),
     (v_day, 2, (select id from public.exercises where slug = 'serrote'), (select id from public.exercises where slug = 'remada-unilateral-maquina'), 3, '8–10', 90, null, null, null, false),
-    (v_day, 3, (select id from public.exercises where slug = 'desenvolvimento-halteres'), (select id from public.exercises where slug = 'desenvolvimento-maquina'), 2, '8–10', 90, null, null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'crucifixo-inverso'), (select id from public.exercises where slug = 'crucifixo-inverso-maquina'), 2, '12–15', 60, null, null, null, false),
+    (v_day, 3, (select id from public.exercises where slug = 'desenvolvimento-halteres'), (select id from public.exercises where slug = 'desenvolvimento-maquina'), 3, '8–10', 90, null, null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'crucifixo-inverso'), (select id from public.exercises where slug = 'crucifixo-inverso-maquina'), 3, '12–15', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'elevacao-lateral'), (select id from public.exercises where slug = 'elevacao-lateral'), 2, '12–15', 60, 'Dose de manutenção, de propósito.', null, null, false),
-    (v_day, 6, (select id from public.exercises where slug = 'rosca-alternada'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, null, null, null, false),
-    (v_day, 7, (select id from public.exercises where slug = 'triceps-testa'), (select id from public.exercises where slug = 'triceps-polia'), 1, '10–12', 60, null, null, null, false),
+    (v_day, 6, (select id from public.exercises where slug = 'rosca-alternada'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, 'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.', null, null, false),
+    (v_day, 7, (select id from public.exercises where slug = 'triceps-testa'), (select id from public.exercises where slug = 'triceps-polia'), 2, '10–12', 60, 'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.', null, null, false),
     (v_day, 8, (select id from public.exercises where slug = 'prancha'), (select id from public.exercises where slug = 'prancha'), 3, '20–40 s', 60, 'Seguido de 8 dead bugs por lado.', null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 5, 'Glúteo', 'Unilateral e metabólico', 50)
+  values (v_block, 5, 'Glúteo', 'Unilateral e metabólico', 55)
   returning id into v_day;
 
   insert into public.training_day_exercises
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
-    (v_day, 1, (select id from public.exercises where slug = 'bulgaro'), (select id from public.exercises where slug = 'leg-press-45'), 3, '8–10 por perna', 90, 'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo.', null, null, true),
-    (v_day, 2, (select id from public.exercises where slug = 'step-up'), (select id from public.exercises where slug = 'leg-press-45'), 2, '10–12 por perna', 90, 'Caixa na altura do joelho. Suba pelo calcanhar.', null, null, true),
-    (v_day, 3, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 2, '12–15', 60, 'Uns 60% da carga de segunda. Descanso curto de propósito.', null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'coice-polia'), (select id from public.exercises where slug = 'coice-maquina'), 2, '12–15 por perna', 60, null, null, null, false),
+    (v_day, 1, (select id from public.exercises where slug = 'bulgaro'), (select id from public.exercises where slug = 'leg-press-45'), 3, '8–10 por perna', 90, 'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo. Sozinha: leg press unilateral.', null, null, true),
+    (v_day, 2, (select id from public.exercises where slug = 'step-up'), (select id from public.exercises where slug = 'leg-press-45'), 3, '10–12 por perna', 90, 'Caixa na altura do joelho. Suba pelo calcanhar. Sozinha: leg press com os pés altos.', null, null, true),
+    (v_day, 3, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '12–15', 60, 'Uns 60% da carga de segunda. Descanso curto de propósito.', null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'coice-polia'), (select id from public.exercises where slug = 'coice-maquina'), 3, '12–15 por perna', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 3, '15–20', 60, 'Três segundos na volta.', null, null, false),
-    (v_day, 6, (select id from public.exercises where slug = 'panturrilha-sentada'), (select id from public.exercises where slug = 'panturrilha-sentada'), 2, '12–15', 60, null, null, null, false);
+    (v_day, 6, (select id from public.exercises where slug = 'panturrilha-sentada'), (select id from public.exercises where slug = 'panturrilha-sentada'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.meal_plans
     (user_id, name, kcal_target, protein_g, protein_min_g, carb_g, fat_g, water_min_l, water_max_l)
@@ -256,6 +262,12 @@ begin
     return;
   end if;
 
+  if exists (select 1 from public.training_blocks where user_id = v_user)
+     or exists (select 1 from public.meal_plans where user_id = v_user) then
+    raise notice 'Usuário % já tem plano, seed ignorado.', 'jhonas@bloco.local';
+    return;
+  end if;
+
   insert into public.training_blocks (user_id, name, started_on, total_weeks)
   values (v_user, 'Bloco 1 — glúteo e pernas', '2026-09-07', 12)
   returning id into v_block;
@@ -268,13 +280,13 @@ begin
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
     (v_day, 1, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '8–10', 120, 'O exercício central da semana. Regra de +5 kg.', 4, '6–8', false),
-    (v_day, 2, (select id from public.exercises where slug = 'agachamento-livre'), (select id from public.exercises where slug = 'hack-squat'), 3, '8–10', 120, 'Goblet squat até a semana 4, barra a partir da 5.', 3, '6–8', false),
-    (v_day, 3, (select id from public.exercises where slug = 'leg-press-45'), (select id from public.exercises where slug = 'leg-press-45'), 2, '10–12', 90, 'Pés na altura média, sem tirar a lombar do encosto.', 3, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'cadeira-extensora'), (select id from public.exercises where slug = 'cadeira-extensora'), 2, '12–15', 60, null, 3, null, false),
+    (v_day, 2, (select id from public.exercises where slug = 'agachamento-livre'), (select id from public.exercises where slug = 'hack-squat'), 3, '8–10', 120, 'Goblet squat até a semana 4, barra a partir da 5.', null, '6–8', false),
+    (v_day, 3, (select id from public.exercises where slug = 'leg-press-45'), (select id from public.exercises where slug = 'leg-press-45'), 3, '10–12', 90, 'Pés na altura média, sem tirar a lombar do encosto.', null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'cadeira-extensora'), (select id from public.exercises where slug = 'cadeira-extensora'), 3, '12–15', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'panturrilha-em-pe'), (select id from public.exercises where slug = 'panturrilha-em-pe'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 2, 'Superiores', 'Costas e peito', 45)
+  values (v_block, 2, 'Superiores', 'Costas e peito', 50)
   returning id into v_day;
 
   insert into public.training_day_exercises
@@ -283,8 +295,8 @@ begin
     (v_day, 1, (select id from public.exercises where slug = 'remada-curvada-halteres'), (select id from public.exercises where slug = 'remada-baixa-sentada'), 3, '8–10', 90, 'Espessura e postura: puxe para o quadril, um segundo no final.', null, null, false),
     (v_day, 2, (select id from public.exercises where slug = 'supino-halteres'), (select id from public.exercises where slug = 'supino-maquina'), 3, '8–10', 90, null, null, null, false),
     (v_day, 3, (select id from public.exercises where slug = 'face-pull'), (select id from public.exercises where slug = 'face-pull'), 3, '12–15', 60, 'Entrou no lugar da puxada alta. É postura de ombro.', null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'triceps-polia'), (select id from public.exercises where slug = 'triceps-polia'), 2, '10–12', 60, null, null, null, false),
-    (v_day, 5, (select id from public.exercises where slug = 'rosca-halteres'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, null, null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'triceps-polia'), (select id from public.exercises where slug = 'triceps-polia'), 3, '10–12', 60, null, null, null, false),
+    (v_day, 5, (select id from public.exercises where slug = 'rosca-halteres'), (select id from public.exercises where slug = 'rosca-maquina'), 3, '10–12', 60, null, null, null, false),
     (v_day, 6, (select id from public.exercises where slug = 'abdominal-solo'), (select id from public.exercises where slug = 'abdominal-maquina'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
@@ -294,14 +306,14 @@ begin
   insert into public.training_day_exercises
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
-    (v_day, 1, (select id from public.exercises where slug = 'rdl-halteres'), (select id from public.exercises where slug = 'pull-through'), 3, '8–10', 120, 'Pull-through nas 4 primeiras semanas ensina o padrão sem carga na coluna.', 3, '6–8', false),
+    (v_day, 1, (select id from public.exercises where slug = 'rdl-halteres'), (select id from public.exercises where slug = 'pull-through'), 3, '8–10', 120, 'Pull-through nas 4 primeiras semanas ensina o padrão sem carga na coluna.', null, '6–8', false),
     (v_day, 2, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '10–12', 90, 'Uns 75% da carga de segunda. Mesma cadência.', null, null, false),
-    (v_day, 3, (select id from public.exercises where slug = 'extensao-45-gluteo'), (select id from public.exercises where slug = 'extensao-45-gluteo'), 2, '12–15', 75, 'Anilha no peito quando 15 ficarem fáceis.', 3, null, false),
+    (v_day, 3, (select id from public.exercises where slug = 'extensao-45-gluteo'), (select id from public.exercises where slug = 'extensao-45-gluteo'), 3, '12–15', 75, 'Anilha no peito quando 15 ficarem fáceis.', null, null, false),
     (v_day, 4, (select id from public.exercises where slug = 'cadeira-flexora-sentada'), (select id from public.exercises where slug = 'cadeira-flexora-sentada'), 3, '10–12', 90, null, null, null, false),
-    (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 2, '15–20', 60, null, 3, null, false);
+    (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 3, '15–20', 60, 'Três segundos na volta, tronco uns 30° à frente.', null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 4, 'Superiores', 'Ombro e braço', 45)
+  values (v_block, 4, 'Superiores', 'Ombro e braço', 50)
   returning id into v_day;
 
   insert into public.training_day_exercises
@@ -309,26 +321,26 @@ begin
   values
     (v_day, 1, (select id from public.exercises where slug = 'supino-inclinado-halteres'), (select id from public.exercises where slug = 'supino-inclinado-maquina'), 3, '8–10', 90, null, null, null, false),
     (v_day, 2, (select id from public.exercises where slug = 'serrote'), (select id from public.exercises where slug = 'remada-unilateral-maquina'), 3, '8–10', 90, null, null, null, false),
-    (v_day, 3, (select id from public.exercises where slug = 'desenvolvimento-halteres'), (select id from public.exercises where slug = 'desenvolvimento-maquina'), 2, '8–10', 90, null, null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'crucifixo-inverso'), (select id from public.exercises where slug = 'crucifixo-inverso-maquina'), 2, '12–15', 60, null, null, null, false),
+    (v_day, 3, (select id from public.exercises where slug = 'desenvolvimento-halteres'), (select id from public.exercises where slug = 'desenvolvimento-maquina'), 3, '8–10', 90, null, null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'crucifixo-inverso'), (select id from public.exercises where slug = 'crucifixo-inverso-maquina'), 3, '12–15', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'elevacao-lateral'), (select id from public.exercises where slug = 'elevacao-lateral'), 2, '12–15', 60, 'Dose de manutenção, de propósito.', null, null, false),
-    (v_day, 6, (select id from public.exercises where slug = 'rosca-alternada'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, null, null, null, false),
-    (v_day, 7, (select id from public.exercises where slug = 'triceps-testa'), (select id from public.exercises where slug = 'triceps-polia'), 1, '10–12', 60, null, null, null, false),
+    (v_day, 6, (select id from public.exercises where slug = 'rosca-alternada'), (select id from public.exercises where slug = 'rosca-maquina'), 2, '10–12', 60, 'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.', null, null, false),
+    (v_day, 7, (select id from public.exercises where slug = 'triceps-testa'), (select id from public.exercises where slug = 'triceps-polia'), 2, '10–12', 60, 'Duas séries de propósito: a terça já teve 3, fecha 5 na semana.', null, null, false),
     (v_day, 8, (select id from public.exercises where slug = 'prancha'), (select id from public.exercises where slug = 'prancha'), 3, '20–40 s', 60, 'Seguido de 8 dead bugs por lado.', null, null, false);
 
   insert into public.training_days (block_id, weekday, title, focus, duration_minutes)
-  values (v_block, 5, 'Glúteo', 'Unilateral e metabólico', 50)
+  values (v_block, 5, 'Glúteo', 'Unilateral e metabólico', 55)
   returning id into v_day;
 
   insert into public.training_day_exercises
     (day_id, position, exercise_partnered_id, exercise_solo_id, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload)
   values
-    (v_day, 1, (select id from public.exercises where slug = 'bulgaro'), (select id from public.exercises where slug = 'leg-press-45'), 3, '8–10 por perna', 90, 'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo.', null, null, true),
-    (v_day, 2, (select id from public.exercises where slug = 'step-up'), (select id from public.exercises where slug = 'leg-press-45'), 2, '10–12 por perna', 90, 'Caixa na altura do joelho. Suba pelo calcanhar.', null, null, true),
-    (v_day, 3, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 2, '12–15', 60, 'Uns 60% da carga de segunda. Descanso curto de propósito.', null, null, false),
-    (v_day, 4, (select id from public.exercises where slug = 'coice-polia'), (select id from public.exercises where slug = 'coice-maquina'), 2, '12–15 por perna', 60, null, null, null, false),
+    (v_day, 1, (select id from public.exercises where slug = 'bulgaro'), (select id from public.exercises where slug = 'leg-press-45'), 3, '8–10 por perna', 90, 'Primeiro da sessão, feito descansada. Nas 4 primeiras semanas, só peso do corpo. Sozinha: leg press unilateral.', null, null, true),
+    (v_day, 2, (select id from public.exercises where slug = 'step-up'), (select id from public.exercises where slug = 'leg-press-45'), 3, '10–12 por perna', 90, 'Caixa na altura do joelho. Suba pelo calcanhar. Sozinha: leg press com os pés altos.', null, null, true),
+    (v_day, 3, (select id from public.exercises where slug = 'hip-thrust-barra'), (select id from public.exercises where slug = 'elevacao-pelvica-maquina'), 3, '12–15', 60, 'Uns 60% da carga de segunda. Descanso curto de propósito.', null, null, false),
+    (v_day, 4, (select id from public.exercises where slug = 'coice-polia'), (select id from public.exercises where slug = 'coice-maquina'), 3, '12–15 por perna', 60, null, null, null, false),
     (v_day, 5, (select id from public.exercises where slug = 'abducao-polia'), (select id from public.exercises where slug = 'cadeira-abdutora'), 3, '15–20', 60, 'Três segundos na volta.', null, null, false),
-    (v_day, 6, (select id from public.exercises where slug = 'panturrilha-sentada'), (select id from public.exercises where slug = 'panturrilha-sentada'), 2, '12–15', 60, null, null, null, false);
+    (v_day, 6, (select id from public.exercises where slug = 'panturrilha-sentada'), (select id from public.exercises where slug = 'panturrilha-sentada'), 3, '12–15', 60, null, null, null, false);
 
   insert into public.meal_plans
     (user_id, name, kcal_target, protein_g, protein_min_g, carb_g, fat_g, water_min_l, water_max_l)
