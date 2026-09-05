@@ -197,20 +197,22 @@ export type LastLoad = { loadKg: number; onDate: string }
  *
  * A sessão em andamento fica de fora: "última" tem que ser a do treino
  * anterior, senão o campo repete o número que a pessoa acabou de digitar.
+ *
+ * O corte sai no próprio SQL, por sessão encerrada, e não por um id recebido de
+ * fora. Antes esta consulta precisava esperar a sessão aberta chegar para saber
+ * o que excluir, e as duas idas ao banco viravam uma fila; agora ela parte junto
+ * com as outras.
  */
-export async function getLastLoads(exceptSessionId?: string): Promise<Record<string, LastLoad>> {
+export async function getLastLoads(): Promise<Record<string, LastLoad>> {
   const supabase = await createClient()
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('exercise_logs')
-    .select('exercise_id, load_kg, updated_at')
+    .select('exercise_id, load_kg, updated_at, workout_sessions!inner(ended_at)')
     .not('load_kg', 'is', null)
+    .not('workout_sessions.ended_at', 'is', null)
     .order('updated_at', { ascending: false })
     .limit(400)
-
-  if (exceptSessionId) query = query.neq('session_id', exceptSessionId)
-
-  const { data, error } = await query
 
   if (error) throw new Error(`Não foi possível carregar o histórico: ${error.message}`)
 

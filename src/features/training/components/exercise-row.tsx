@@ -18,6 +18,8 @@ type ExerciseRowProps = {
   note: string | null
   lastLoad: LastLoad | undefined
   session: { id: string; done: boolean; loadKg: number | null } | null
+  /** Avisa o board para o contador do cronômetro andar junto. */
+  onDoneChange: (done: boolean) => void
 }
 
 function formatLoad(value: number) {
@@ -39,8 +41,11 @@ export function ExerciseRow({
   note,
   lastLoad,
   session,
+  onDoneChange,
 }: ExerciseRowProps) {
-  const [done, setDone] = useState(session?.done ?? false)
+  // `done` vem do board: é ele que conta quantos exercícios faltam, e duas
+  // cópias do mesmo booleano acabariam discordando.
+  const done = session?.done ?? false
   const [load, setLoad] = useState(
     session?.loadKg === null || session?.loadKg === undefined ? '' : formatLoad(session.loadKg),
   )
@@ -67,7 +72,7 @@ export function ExerciseRow({
     // O estado muda na hora e a gravação vai atrás: entre uma série e outra,
     // esperar a rede para ver o risco aparecer seria irritante.
     const next = !done
-    setDone(next)
+    onDoneChange(next)
     persist({ done: next, loadKg: load })
   }
 
