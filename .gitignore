@@ -52,3 +52,6 @@ next-env.d.ts
 # claude code
 .claude/settings.local.json
 .claude/launch.json
+
+# artefatos do Playwright MCP em depuração local
+.playwright-mcp/
