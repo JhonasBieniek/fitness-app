@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useOptimistic, useTransition } from 'react'
 
 import { setTrainingMode, type TrainingMode } from '@/features/training/server/actions'
 import { cn } from '@/shared/lib/cn'
@@ -11,28 +10,29 @@ const OPTIONS: { value: TrainingMode; label: string }[] = [
   { value: 'sozinha', label: 'Sozinha' },
 ]
 
+type ModeToggleProps = {
+  mode: TrainingMode
+  onChange: (mode: TrainingMode) => void
+}
+
 /**
  * Troca a coluna do treino: peso livre quando há alguém corrigindo o movimento,
  * máquina ou polia quando não há.
  *
- * A troca aparece antes de a gravação terminar. Esperar o servidor para ver o
- * nome do exercício mudar faria o controle parecer travado.
+ * Quem manda na tela é o estado do `TrainingBoard`, que já tem as duas colunas
+ * em mãos: a lista muda no mesmo quadro do toque. A gravação do cookie vai
+ * solta, sem `await`, porque ela só serve para a próxima visita — travar a
+ * troca esperando o servidor era o que fazia o controle parecer emperrado.
  */
-export function ModeToggle({ mode }: { mode: TrainingMode }) {
-  const [isPending, startTransition] = useTransition()
-  const [optimisticMode, setOptimisticMode] = useOptimistic(mode)
-
+export function ModeToggle({ mode, onChange }: ModeToggleProps) {
   return (
     <div
       role="radiogroup"
       aria-label="Como você vai treinar"
-      className={cn(
-        'border-line bg-surface-2 relative flex rounded-full border p-0.5',
-        isPending && 'opacity-90',
-      )}
+      className="border-line bg-surface-2 relative flex rounded-full border p-0.5"
     >
       {OPTIONS.map((option) => {
-        const isActive = optimisticMode === option.value
+        const isActive = mode === option.value
 
         return (
           <button
@@ -40,12 +40,12 @@ export function ModeToggle({ mode }: { mode: TrainingMode }) {
             type="button"
             role="radio"
             aria-checked={isActive}
-            onClick={() =>
-              startTransition(async () => {
-                setOptimisticMode(option.value)
-                await setTrainingMode(option.value)
-              })
-            }
+            onClick={() => {
+              onChange(option.value)
+              // Preferência é conveniência: se a gravação falhar, o treino
+              // continua na coluna escolhida e nada precisa ser dito.
+              void setTrainingMode(option.value).catch(() => {})
+            }}
             className="relative flex-1 px-2.5 py-1"
           >
             {isActive ? (
