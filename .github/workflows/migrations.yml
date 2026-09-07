@@ -1,0 +1,111 @@
+name: Migrations
+
+# O schema é versionado nas migrations, e no plano free elas são o único backup
+# que existe: não há PITR nem réplica. Por isso nada chega ao banco de produção
+# sem antes ter sido aplicado do zero em um banco limpo.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      # Mudar o próprio workflow também precisa exercitá-lo.
+      - '.github/workflows/migrations.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+  # Para aplicar o que já está na main sem esperar uma migration nova.
+  workflow_dispatch:
+
+# Duas aplicações simultâneas no mesmo banco competiriam pela tabela de
+# histórico. Fila, e nunca cancelar no meio.
+concurrency:
+  group: migrations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validar:
+    name: Aplicar do zero
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Sobe um Supabase vazio e replica todas as migrations em ordem. Uma
+      # migration que só funciona partindo do banco de hoje — porque supõe uma
+      # coluna criada à mão, ou depende de outra que ainda não rodou — falha
+      # aqui, e não na produção.
+      - name: Subir o banco e aplicar as migrations
+        run: supabase start
+
+      - name: Erros de tipagem no schema
+        run: supabase db lint --local --level warning --fail-on error
+
+      # O CLAUDE.md manda regerar os tipos depois de cada migration. Isto é o
+      # que torna a regra verificável em vez de opcional.
+      - name: Os tipos comitados batem com o schema?
+        run: |
+          supabase gen types typescript --local > src/lib/supabase/database.types.ts
+          npx prettier --write src/lib/supabase/database.types.ts
+          if ! git diff --quiet src/lib/supabase/database.types.ts; then
+            git diff src/lib/supabase/database.types.ts
+            echo "::error file=src/lib/supabase/database.types.ts::Os tipos estão fora de sincronia com o schema. Rode 'npm run db:types' e comite o arquivo."
+            exit 1
+          fi
+
+  aplicar:
+    name: Aplicar na produção
+    if: github.event_name != 'pull_request'
+    needs: validar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Existe para dar um lugar onde exigir aprovação manual antes de tocar no
+    # banco, sem mexer no workflow: Settings › Environments › producao.
+    environment: producao
+
+    env:
+      # Uma string de conexão Postgres resolve tudo: a CLI fala direto com o
+      # banco, sem passar pela API de gerenciamento. Isso dispensa o access
+      # token — que o Supabase sugere criar com 7 dias de validade e quebraria
+      # o deploy sem aviso — e dispensa o project ref e a senha soltos.
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+
+      # Sem isto a falha vem como erro de conexão da CLI, que não diz o que
+      # está faltando.
+      - name: Conferir o segredo
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Falta o segredo SUPABASE_DB_URL em Settings › Secrets and variables › Actions."
+            exit 1
+          fi
+
+      - name: O que está pendente
+        run: supabase migration list --db-url "$SUPABASE_DB_URL"
+
+      - name: Aplicar
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --skip-vault
+
+      - name: Estado final
+        if: always()
+        run: supabase migration list --db-url "$SUPABASE_DB_URL"

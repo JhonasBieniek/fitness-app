@@ -91,7 +91,15 @@ Use Client Components apenas onde há interação real (formulário, contador de
 - Envolva `auth.uid()` em `(select auth.uid())` nas policies: o Postgres
   materializa o valor uma vez em vez de reavaliar por linha.
 - Schema muda **só por migration** em `supabase/migrations/`, nunca pelo painel.
-  Depois de aplicar, rode `npm run db:types` e comite o arquivo gerado.
+  Depois de aplicar, rode `npm run db:types` e comite o arquivo gerado — o CI
+  reprova o PR se os tipos estiverem fora de sincronia com o schema.
+- **Migrations vão para a produção sozinhas** ao entrar na `main`, pelo workflow
+  `migrations.yml`, depois de terem sido aplicadas do zero em um banco limpo.
+- **Toda migration precisa funcionar com o código que já está no ar.** O deploy
+  da Vercel e a migration disparam no mesmo push e correm em paralelo: não há
+  como garantir qual termina primeiro. Então adicionar coluna, tabela ou policy é
+  seguro; renomear e remover não são, e viram dois passos em PRs separados —
+  primeiro o código para de usar, depois a coluna cai.
 - Não existe cadastro público. Contas são criadas no painel do Supabase e o
   perfil é criado por trigger.
 - Índice em toda coluna usada em filtro de policy ou em `where` recorrente.
