@@ -3,25 +3,24 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
-import { THEMES, THEME_COOKIE, type Theme } from '@/features/theme/server/theme'
+import {
+  isTheme,
+  THEME_COOKIE,
+  THEME_COOKIE_OPTIONS,
+  type Theme,
+} from '@/features/theme/domain/theme'
 import { createClient } from '@/lib/supabase/server'
-
-const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
 /**
  * Grava o tema no cookie, que é o que a renderização lê, e no perfil, que é o
- * que faz a escolha acompanhar a pessoa em outro aparelho. O cookie sozinho
- * bastaria para a tela; o perfil é o que sobrevive a trocar de celular.
+ * que o login relê para recriar o cookie em outro aparelho. O cookie sozinho
+ * bastaria para a tela deste celular; o perfil é o que sobrevive a trocar dele.
  */
 export async function setTheme(theme: Theme) {
-  if (!THEMES.includes(theme)) return
+  if (!isTheme(theme)) return
 
   const store = await cookies()
-  store.set(THEME_COOKIE, theme, {
-    maxAge: ONE_YEAR_SECONDS,
-    sameSite: 'lax',
-    path: '/',
-  })
+  store.set(THEME_COOKIE, theme, THEME_COOKIE_OPTIONS)
 
   const supabase = await createClient()
   const {

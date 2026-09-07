@@ -1,13 +1,17 @@
 import 'server-only'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+import { isTheme, type Theme } from '@/features/theme/domain/theme'
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/supabase/database.types'
 
 export type Profile = {
   id: string
   displayName: string
   /** `iniciante` é o que faz o alternador Acompanhada/Sozinha aparecer. */
   level: 'iniciante' | 'intermediario' | 'avancado'
-  theme: 'claro' | 'escuro'
+  theme: Theme
   timeZone: string
 }
 
@@ -26,7 +30,20 @@ export async function getProfile(): Promise<Profile | null> {
     id: data.id,
     displayName: data.display_name,
     level: data.level,
-    theme: data.theme === 'escuro' ? 'escuro' : 'claro',
+    theme: isTheme(data.theme) ? data.theme : 'claro',
     timeZone: data.time_zone,
   }
+}
+
+/**
+ * Recebe o cliente porque quem chama é o login, logo depois de autenticar: usar
+ * o mesmo cliente dispensa esperar a sessão nova voltar pelos cookies.
+ *
+ * Devolve `null` quando não há perfil ou o valor gravado não é um tema
+ * conhecido — quem chama trata isso mantendo o tema padrão.
+ */
+export async function getProfileTheme(supabase: SupabaseClient<Database>): Promise<Theme | null> {
+  const { data } = await supabase.from('profiles').select('theme').maybeSingle()
+
+  return isTheme(data?.theme) ? data.theme : null
 }
