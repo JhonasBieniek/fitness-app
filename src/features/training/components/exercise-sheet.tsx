@@ -1,7 +1,6 @@
 'use client'
 
 import { ArrowSquareOut, ListNumbers, X } from '@phosphor-icons/react/dist/ssr'
-import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
@@ -30,14 +29,32 @@ function demonstrationUrl(name: string) {
  * movimento de relance. Quem não tem foto mostra que tem passos escritos.
  */
 export function ExerciseSheet(props: ExerciseSheetProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  // Dois estados, e não um: a folha precisa continuar no DOM enquanto desliza
+  // para fora. `montada` diz se existe; `visivel` dispara a transição.
+  const [montada, setMontada] = useState(false)
+  const [visivel, setVisivel] = useState(false)
   const thumb = props.end ?? props.start
+
+  function abrir() {
+    setMontada(true)
+    // Um quadro depois: ligar a classe no mesmo quadro da montagem não é
+    // transição nenhuma, o navegador pinta direto no estado final.
+    requestAnimationFrame(() => setVisivel(true))
+  }
+
+  function fechar() {
+    setVisivel(false)
+    // A saída normal é o fim da transição. Esta é a rede de proteção: uma aba em
+    // segundo plano não dispara `transitionend`, e uma folha presa no DOM cobre
+    // a tela inteira.
+    window.setTimeout(() => setMontada(false), 500)
+  }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={abrir}
         aria-label={`Ver execução de ${props.name}`}
         className="border-line bg-surface-2 relative size-14 shrink-0 overflow-hidden rounded-xl border transition active:scale-95"
       >
@@ -60,14 +77,24 @@ export function ExerciseSheet(props: ExerciseSheetProps) {
         )}
       </button>
 
-      <AnimatePresence>
-        {isOpen ? <Sheet {...props} onClose={() => setIsOpen(false)} /> : null}
-      </AnimatePresence>
+      {montada ? (
+        <Sheet
+          {...props}
+          visivel={visivel}
+          onClose={fechar}
+          onSaiuDeCena={() => setMontada(false)}
+        />
+      ) : null}
     </>
   )
 }
 
-type SheetProps = ExerciseSheetProps & { onClose: () => void }
+type SheetProps = ExerciseSheetProps & {
+  visivel: boolean
+  onClose: () => void
+  /** Chamado quando a animação de saída termina: só então a folha some do DOM. */
+  onSaiuDeCena: () => void
+}
 
 function Sheet({
   name,
@@ -78,7 +105,9 @@ function Sheet({
   start,
   end,
   loop,
+  visivel,
   onClose,
+  onSaiuDeCena,
 }: SheetProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
 
@@ -109,24 +138,27 @@ function Sheet({
   ].filter((frame): frame is { src: string; label: string } => Boolean(frame.src))
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.16 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45"
+    <div
       onClick={onClose}
+      onTransitionEnd={(event) => {
+        // A transição das filhas também sobe até aqui.
+        if (event.target === event.currentTarget && !visivel) onSaiuDeCena()
+      }}
+      className={cn(
+        'fixed inset-0 z-50 flex items-end justify-center bg-black/45 transition-opacity duration-200',
+        // Saindo de cena ela não intercepta mais o toque, mesmo antes de sumir.
+        visivel ? 'opacity-100' : 'pointer-events-none opacity-0',
+      )}
     >
-      <motion.div
+      <div
         role="dialog"
         aria-modal="true"
         aria-label={`Execução de ${name}`}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 320, damping: 34 }}
         onClick={(event) => event.stopPropagation()}
-        className="bg-bg flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl"
+        className={cn(
+          'bg-bg flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl transition-transform duration-300 ease-[cubic-bezier(0.2,0.9,0.25,1)]',
+          visivel ? 'translate-y-0' : 'translate-y-full',
+        )}
       >
         <div className="flex items-start gap-3 px-5 pt-4 pb-3">
           <div className="min-w-0 flex-1">
@@ -215,7 +247,7 @@ function Sheet({
           </a>
           <p className="text-ink-3 mt-1.5 text-center text-[11.5px]">Abre fora do app.</p>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
