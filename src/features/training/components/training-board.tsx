@@ -1,11 +1,11 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import type { ExercisePrescription } from '@/features/training/domain/block'
 import { ExerciseRow } from '@/features/training/components/exercise-row'
 import { ModeToggle } from '@/features/training/components/mode-toggle'
+import { marcarExercicio, useMarcados } from '@/features/training/components/session-progress'
 import {
   CancelWorkoutButton,
   StartWorkoutButton,
@@ -13,8 +13,8 @@ import {
 } from '@/features/training/components/workout-controls'
 import type { TrainingMode } from '@/features/training/server/actions'
 import type { ExerciseVariant, LastLoad, OpenSession } from '@/features/training/server/queries'
-import { cn } from '@/shared/lib/cn'
 import { ProtocolDial } from '@/shared/ui/protocol-dial'
+import { TabRail } from '@/shared/ui/tab-rail'
 
 const WEEKDAY_SHORT = ['', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'] as const
 
@@ -81,33 +81,11 @@ export function TrainingBoard({
   const [weekday, setWeekday] = useState(initialWeekday)
   const [mode, setMode] = useState(initialMode)
 
-  // O que foi marcado nesta sessão, aqui e não em cada linha: é este número que
-  // o cronômetro mostra. Como gravar um log não revalida mais a rota, sem isto
-  // o contador ficaria parado enquanto a pessoa treina.
-  const [doneHere, setDoneHere] = useState<Record<string, boolean>>({})
-  const [trackedSession, setTrackedSession] = useState(session?.id ?? null)
-
-  // Sessão nova começa com tudo desmarcado.
-  if (trackedSession !== (session?.id ?? null)) {
-    setTrackedSession(session?.id ?? null)
-    setDoneHere({})
-  }
-
-  const railRef = useRef<HTMLDivElement>(null)
-  const activeRef = useRef<HTMLButtonElement>(null)
-
-  // Centraliza a aba aberta só na montagem: na sexta a aba certa nasce fora da
-  // tela. Recentralizar a cada toque faria a faixa fugir do dedo.
-  useEffect(() => {
-    const rail = railRef.current
-    const active = activeRef.current
-    if (!rail || !active) return
-
-    rail.scrollTo({
-      left: active.offsetLeft - rail.clientWidth / 2 + active.clientWidth / 2,
-      behavior: 'instant',
-    })
-  }, [])
+  // O que foi marcado nesta sessão. Fica fora da rota porque a rota desmonta ao
+  // trocar de tela: sem isso, ir à dieta e voltar apagaria os riscos da tela.
+  // É também este número que o cronômetro mostra — gravar um log não revalida
+  // mais a rota, então sem um dono no cliente o contador ficaria parado.
+  const doneHere = useMarcados(session?.id ?? null)
 
   function selectDay(next: number) {
     setWeekday(next)
@@ -124,6 +102,10 @@ export function TrainingBoard({
 
   const isSessionHere = session !== null && session.dayId === day.id
   const sessionMode = isSessionHere ? session.mode : mode
+
+  // O id sai daqui em vez de sair de dentro do `map`: o retorno de chamada roda
+  // depois da renderização, e ali o compilador já não sabe que há sessão.
+  const sessionId = isSessionHere ? session.id : null
 
   function isDone(exerciseId: string) {
     if (!isSessionHere) return false
@@ -164,52 +146,18 @@ export function TrainingBoard({
         <p className="text-ink-2 mx-4 mb-3 text-[13px] leading-snug">{status.guidance}</p>
       )}
 
-      <div
-        ref={railRef}
-        role="tablist"
-        aria-label="Dias de treino"
-        className="no-scrollbar border-line flex gap-1 overflow-x-auto border-b [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)] px-3"
-      >
-        {days.map((item) => {
-          const isSelected = item.weekday === weekday
-
-          return (
-            <button
-              key={item.id}
-              ref={isSelected ? activeRef : undefined}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => selectDay(item.weekday)}
-              className={cn(
-                'relative shrink-0 px-3 pt-2.5 pb-3 text-left transition-colors',
-                isSelected ? 'text-ink' : 'text-ink-3',
-              )}
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="font-mono text-[11px] tracking-wider uppercase">
-                  {WEEKDAY_SHORT[item.weekday]}
-                </span>
-                {item.weekday === todayWeekday ? (
-                  <span className="bg-accent size-1.5 rounded-full" aria-label="hoje" />
-                ) : null}
-              </span>
-
-              <span className="mt-0.5 block text-[14px] leading-tight font-semibold whitespace-nowrap">
-                {item.title}
-              </span>
-
-              {isSelected ? (
-                <motion.span
-                  layoutId="aba-ativa"
-                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                  className="bg-accent absolute inset-x-3 -bottom-px h-0.5 rounded-full"
-                />
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
+      <TabRail
+        label="Dias de treino"
+        items={days.map((item) => ({
+          id: String(item.weekday),
+          eyebrow: WEEKDAY_SHORT[item.weekday] ?? '',
+          title: item.title,
+          isNow: item.weekday === todayWeekday,
+          nowLabel: 'hoje',
+        }))}
+        selectedId={String(weekday)}
+        onSelect={(id) => selectDay(Number(id))}
+      />
 
       {isSessionHere ? (
         <WorkoutTimer
@@ -247,7 +195,10 @@ export function TrainingBoard({
                   ? { id: session.id, done: isDone(item.id), loadKg: log?.loadKg ?? null }
                   : null
               }
-              onDoneChange={(next) => setDoneHere((current) => ({ ...current, [item.id]: next }))}
+              onDoneChange={(next) => {
+                // Fora de uma sessão aberta a linha nem desenha a caixa.
+                if (sessionId) marcarExercicio(sessionId, item.id, next)
+              }}
             />
           )
         })}

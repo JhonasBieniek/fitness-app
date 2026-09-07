@@ -121,3 +121,22 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Traço de carregamento da navegação. Nasce transparente e só entra depois de
+ * um atraso: numa troca de tela instantânea — o caso normal, já que as três
+ * rotas são buscadas antes do toque — ele nunca chega a ser visto.
+ */
+@keyframes bloco-carregando {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}

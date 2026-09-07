@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -13,8 +14,11 @@ export type SessionUser = {
 /**
  * Usuário da requisição atual, ou `null`. Usa `getUser`, que valida o token no
  * servidor do Supabase — `getSession` apenas lê o cookie e é falsificável.
+ *
+ * Memoizado por requisição: a validação é uma ida à rede, e duas telas que
+ * precisem do usuário no mesmo render não devem pagar por ela duas vezes.
  */
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -28,7 +32,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     displayName:
       (user.user_metadata?.display_name as string | undefined) ?? user.email.split('@')[0]!,
   }
-}
+})
 
 /** Igual a `getCurrentUser`, mas exige sessão. Use em páginas privadas. */
 export async function requireUser(): Promise<SessionUser> {

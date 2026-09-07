@@ -1,7 +1,6 @@
 'use client'
 
 import { Moon, Sun } from '@phosphor-icons/react/dist/ssr'
-import { motion } from 'motion/react'
 import { useOptimistic, useTransition } from 'react'
 
 import { setTheme } from '@/features/theme/server/actions'
@@ -21,8 +20,22 @@ export function ThemeToggle({ theme }: { theme: Theme }) {
     <div
       role="radiogroup"
       aria-label="Tema"
-      className="border-line bg-surface-2 flex rounded-full border p-0.5"
+      className="border-line bg-surface-2 relative flex rounded-full border p-0.5"
     >
+      {/* Duas opções de mesma largura: a pílula desliza sem precisar ser medida. */}
+      <span
+        aria-hidden
+        className="bg-surface pointer-events-none absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+        style={{
+          transform: `translate3d(${
+            Math.max(
+              0,
+              OPTIONS.findIndex((o) => o.value === optimistic),
+            ) * 100
+          }%, 0, 0)`,
+        }}
+      />
+
       {OPTIONS.map(({ value, label, Icon }) => {
         const isActive = optimistic === value
 
@@ -38,25 +51,13 @@ export function ThemeToggle({ theme }: { theme: Theme }) {
                 await setTheme(value)
               })
             }
-            className="relative flex-1 px-3 py-1.5"
+            className={cn(
+              'relative flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium transition-colors',
+              isActive ? 'text-ink' : 'text-ink-2',
+            )}
           >
-            {isActive ? (
-              <motion.span
-                layoutId="tema-ativo"
-                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                className="bg-surface absolute inset-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-              />
-            ) : null}
-
-            <span
-              className={cn(
-                'relative flex items-center justify-center gap-1.5 text-[13px] font-medium transition-colors',
-                isActive ? 'text-ink' : 'text-ink-2',
-              )}
-            >
-              <Icon size={14} weight="regular" aria-hidden />
-              {label}
-            </span>
+            <Icon size={14} weight="regular" aria-hidden />
+            {label}
           </button>
         )
       })}
