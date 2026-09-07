@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatTimeOfDay, parseTimeOfDay, resolveSlot, zonedNow } from './time'
+import { formatTimeOfDay, parseTimeOfDay, zonedNow } from './time'
 
 const SP = 'America/Sao_Paulo'
 
@@ -65,66 +65,5 @@ describe('formatTimeOfDay', () => {
   it('rejeita valores fora do dia', () => {
     expect(() => formatTimeOfDay(1440)).toThrow(/fora do intervalo/)
     expect(() => formatTimeOfDay(-1)).toThrow(/fora do intervalo/)
-  })
-})
-
-describe('resolveSlot', () => {
-  const meals = [
-    { id: 'cafe', startMinutes: parseTimeOfDay('08:30') },
-    { id: 'almoco', startMinutes: parseTimeOfDay('12:00') },
-    { id: 'lanche', startMinutes: parseTimeOfDay('15:30') },
-    { id: 'jantar', startMinutes: parseTimeOfDay('19:30') },
-    { id: 'noite', startMinutes: parseTimeOfDay('21:00') },
-  ]
-
-  it('encontra o slot que contém o horário atual', () => {
-    const result = resolveSlot(meals, parseTimeOfDay('13:00'))
-
-    expect(result.current?.id).toBe('almoco')
-    expect(result.next?.id).toBe('lanche')
-    expect(result.previous?.id).toBe('cafe')
-  })
-
-  it('estende o slot aberto até o início do próximo', () => {
-    // 11:59 ainda é café, porque nenhum slot declara fim explícito.
-    expect(resolveSlot(meals, parseTimeOfDay('11:59')).current?.id).toBe('cafe')
-  })
-
-  it('mantém o último slot ativo até o fim do dia', () => {
-    const result = resolveSlot(meals, parseTimeOfDay('23:59'))
-
-    expect(result.current?.id).toBe('noite')
-    expect(result.next).toBeNull()
-  })
-
-  it('antes do primeiro slot não há atual, só o próximo', () => {
-    const result = resolveSlot(meals, parseTimeOfDay('06:00'))
-
-    expect(result.current).toBeNull()
-    expect(result.next?.id).toBe('cafe')
-    expect(result.previous).toBeNull()
-  })
-
-  it('respeita o fim explícito e deixa o intervalo sem slot atual', () => {
-    const withGap = [
-      { id: 'treino', startMinutes: parseTimeOfDay('07:00'), endMinutes: parseTimeOfDay('08:00') },
-      { id: 'cafe', startMinutes: parseTimeOfDay('08:30') },
-    ]
-
-    const result = resolveSlot(withGap, parseTimeOfDay('08:15'))
-
-    expect(result.current).toBeNull()
-    expect(result.previous?.id).toBe('treino')
-    expect(result.next?.id).toBe('cafe')
-  })
-
-  it('ordena os slots recebidos fora de ordem', () => {
-    const shuffled = [...meals].reverse()
-
-    expect(resolveSlot(shuffled, parseTimeOfDay('16:00')).current?.id).toBe('lanche')
-  })
-
-  it('devolve tudo nulo quando não há slots', () => {
-    expect(resolveSlot([], 600)).toEqual({ current: null, next: null, previous: null })
   })
 })

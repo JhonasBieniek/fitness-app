@@ -7,12 +7,14 @@ import type { Meal } from '@/features/nutrition/server/queries'
 import { cn } from '@/shared/lib/cn'
 import { TabRail } from '@/shared/ui/tab-rail'
 
-export type TimelineEntry = { meal: Meal; time: string; status: MealStatus }
+export type TimelineEntry = { meal: Meal; time: string; minutes: number; status: MealStatus }
 
 type MealTimelineProps = {
   entries: TimelineEntry[]
-  /** Índice que abre na primeira renderização: a refeição do horário. */
+  /** Índice que abre na primeira renderização: a refeição mais próxima de agora. */
   initialIndex: number
+  /** Minutos desde a meia-noite, para separar "agora" de "em breve". */
+  nowMinutes: number
 }
 
 /**
@@ -23,7 +25,7 @@ type MealTimelineProps = {
  * treino — uma faixa de tempo e uma coisa em foco — para as duas rotas do app
  * se navegarem do mesmo jeito.
  */
-export function MealTimeline({ entries, initialIndex }: MealTimelineProps) {
+export function MealTimeline({ entries, initialIndex, nowMinutes }: MealTimelineProps) {
   const [index, setIndex] = useState(initialIndex)
 
   const entry = entries[index] ?? entries[0]
@@ -40,7 +42,10 @@ export function MealTimeline({ entries, initialIndex }: MealTimelineProps) {
             eyebrow: item.time,
             title: item.meal.name,
             isNow: item.status === 'agora',
-            nowLabel: 'agora',
+            // A refeição em foco é a mais perto, e a mais perto pode ainda não
+            // ter chegado: às 11:50 o almoço está em foco, mas dizer "agora"
+            // ali seria mentira.
+            nowLabel: item.minutes <= nowMinutes ? 'agora' : 'em breve',
           }))}
           selectedId={entry.meal.id}
           onSelect={(id) => setIndex(entries.findIndex((item) => item.meal.id === id))}

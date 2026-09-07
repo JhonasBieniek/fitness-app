@@ -29,23 +29,45 @@ describe('buildMealTimeline', () => {
     ])
   })
 
-  it('a refeição corrente começa no seu horário', () => {
-    expect(statuses('08:29')[0]).toEqual(['cafe', 'proxima'])
-    expect(statuses('08:30')[0]).toEqual(['cafe', 'agora'])
+  it('aponta a refeição mais próxima, e não a última que passou', () => {
+    // 11:50: faltam 10 min para o almoço e o café foi há 3h20. A régua abre no
+    // almoço. Era este o defeito: o café ficava em destaque até meio-dia em ponto.
+    expect(statuses('11:50')).toEqual([
+      ['cafe', 'passada'],
+      ['almoco', 'agora'],
+      ['lanche', 'proxima'],
+      ['jantar', 'futura'],
+      ['ceia', 'futura'],
+    ])
+  })
+
+  it('na virada entre duas refeições, o destaque acompanha a mais perto', () => {
+    // Ponto médio entre café (08:30) e almoço (12:00) é 10:15.
+    expect(statuses('10:14')[0]).toEqual(['cafe', 'agora'])
+    expect(statuses('10:16')[1]).toEqual(['almoco', 'agora'])
+  })
+
+  it('empate no meio do caminho fica com a que ainda vem', () => {
+    expect(statuses('10:15')[1]).toEqual(['almoco', 'agora'])
   })
 
   it('mantém a última refeição em destaque até a virada do dia', () => {
     expect(statuses('23:50').at(-1)).toEqual(['ceia', 'agora'])
   })
 
-  it('antes da primeira refeição nada está acontecendo, mas a próxima é conhecida', () => {
+  it('antes da primeira refeição do dia, o destaque é ela mesma', () => {
     expect(statuses('06:00')).toEqual([
-      ['cafe', 'proxima'],
-      ['almoco', 'futura'],
+      ['cafe', 'agora'],
+      ['almoco', 'proxima'],
       ['lanche', 'futura'],
       ['jantar', 'futura'],
       ['ceia', 'futura'],
     ])
+  })
+
+  it('uma refeição só é sempre a mais próxima', () => {
+    const uma = buildMealTimeline([{ id: 'cafe', time: '08:30' }], parseTimeOfDay('23:00'))
+    expect(uma.map((entry) => entry.status)).toEqual(['agora'])
   })
 
   it('devolve as refeições em ordem de horário, não de cadastro', () => {

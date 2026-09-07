@@ -3,10 +3,11 @@ import type { Metadata } from 'next'
 import { buildMealTimeline } from '@/features/nutrition/domain/timeline'
 import { MealTimeline } from '@/features/nutrition/components/meal-timeline'
 import { PlanDetails } from '@/features/nutrition/components/plan-details'
+import { RulesDialog } from '@/features/nutrition/components/rules-dialog'
 import { getActiveMealPlan } from '@/features/nutrition/server/queries'
 import { getProfile } from '@/features/profile/server/queries'
 import { publicEnv } from '@/lib/env'
-import { formatTimeOfDay, zonedNow } from '@/shared/lib/time'
+import { zonedNow } from '@/shared/lib/time'
 
 export const metadata: Metadata = { title: 'Dieta' }
 
@@ -38,10 +39,10 @@ export default async function DietaPage() {
   const now = zonedNow(new Date(), profile?.timeZone ?? publicEnv().NEXT_PUBLIC_APP_TIMEZONE)
   const timeline = buildMealTimeline(plan.meals, now.minutesOfDay)
 
-  // Abre na refeição do momento. Antes da primeira do dia, na que vem.
+  // Abre na refeição de horário mais perto de agora.
   const focusedIndex = Math.max(
     0,
-    timeline.findIndex((entry) => entry.status === 'agora' || entry.status === 'proxima'),
+    timeline.findIndex((entry) => entry.status === 'agora'),
   )
   const macros = [
     { value: formatNumber(plan.kcalTarget), unit: '', label: 'kcal' },
@@ -52,14 +53,12 @@ export default async function DietaPage() {
 
   return (
     <main className="flex flex-1 flex-col gap-5 px-4 pt-4 pb-6">
-      <header className="flex items-baseline justify-between gap-3">
+      <header className="flex items-center justify-between gap-3">
         <h1 className="text-[20px] leading-tight font-semibold tracking-tight">Alimentação</h1>
-        <p className="text-ink-3 tabular font-mono text-[12px]">
-          agora {formatTimeOfDay(now.minutesOfDay)}
-        </p>
+        <RulesDialog rules={plan.rules} />
       </header>
 
-      <MealTimeline entries={timeline} initialIndex={focusedIndex} />
+      <MealTimeline entries={timeline} initialIndex={focusedIndex} nowMinutes={now.minutesOfDay} />
 
       {/*
         Metas do dia em uma faixa de quatro números. Elas são referência do
@@ -88,27 +87,6 @@ export default async function DietaPage() {
           {plan.waterMaxL ? ` a ${formatLiters(plan.waterMaxL)}` : ''} L por dia.
         </p>
       </section>
-
-      {plan.rules.length > 0 ? (
-        <section aria-label="Regras do plano">
-          <h2 className="text-ink-2 mb-1 text-[11.5px] font-medium tracking-wide uppercase">
-            Regras
-          </h2>
-
-          {/*
-            Fios em vez de cartões: são seis frases curtas, e seis caixas
-            desenhariam uma grade de alturas desiguais para não dizer mais nada.
-          */}
-          <dl className="divide-line divide-y">
-            {plan.rules.map((rule) => (
-              <div key={rule.id} className="flex items-baseline gap-3 py-2.5">
-                <dt className="w-24 shrink-0 text-[13px] font-semibold">{rule.title}</dt>
-                <dd className="text-ink-2 flex-1 text-[13px] leading-snug">{rule.body}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ) : null}
 
       <PlanDetails notes={plan.details} />
     </main>
