@@ -1,10 +1,10 @@
 'use client'
 
 import { Moon, Sun } from '@phosphor-icons/react/dist/ssr'
-import { useOptimistic, useTransition } from 'react'
 
+import { aplicarTema, useTema } from '@/features/theme/components/theme-store'
 import type { Theme } from '@/features/theme/domain/theme'
-import { setTheme } from '@/features/theme/server/actions'
+import { sincronizarTema } from '@/features/theme/server/actions'
 import { cn } from '@/shared/lib/cn'
 
 const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
@@ -13,8 +13,7 @@ const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
 ]
 
 export function ThemeToggle({ theme }: { theme: Theme }) {
-  const [, startTransition] = useTransition()
-  const [optimistic, setOptimistic] = useOptimistic(theme)
+  const atual = useTema(theme)
 
   return (
     <div
@@ -30,14 +29,14 @@ export function ThemeToggle({ theme }: { theme: Theme }) {
           transform: `translate3d(${
             Math.max(
               0,
-              OPTIONS.findIndex((o) => o.value === optimistic),
+              OPTIONS.findIndex((o) => o.value === atual),
             ) * 100
           }%, 0, 0)`,
         }}
       />
 
       {OPTIONS.map(({ value, label, Icon }) => {
-        const isActive = optimistic === value
+        const isActive = atual === value
 
         return (
           <button
@@ -45,12 +44,17 @@ export function ThemeToggle({ theme }: { theme: Theme }) {
             type="button"
             role="radio"
             aria-checked={isActive}
-            onClick={() =>
-              startTransition(async () => {
-                setOptimistic(value)
-                await setTheme(value)
-              })
-            }
+            onClick={() => {
+              if (isActive) return
+
+              aplicarTema(value)
+
+              // Guardar no perfil é o que faz a escolha acompanhar a pessoa em
+              // outro aparelho. Não vale segurar a tela por isso: a cor já
+              // mudou, e se a rede falhar o custo é só o outro aparelho abrir
+              // no tema antigo.
+              void sincronizarTema(value).catch(() => {})
+            }}
             className={cn(
               'relative flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium transition-colors',
               isActive ? 'text-ink' : 'text-ink-2',

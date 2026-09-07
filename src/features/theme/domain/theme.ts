@@ -14,6 +14,20 @@ export const THEME_COOKIE_OPTIONS = {
   path: '/',
 } as const
 
+/**
+ * Cópia local da preferência. O cookie sozinho não basta: o Safari — no iPhone
+ * e também no PWA instalado — corta a validade de cookie escrito por script
+ * para 7 dias. Sem esta cópia o tema escuro voltaria sozinho para claro depois
+ * de uma semana sem abrir o app.
+ */
+export const THEME_STORAGE_KEY = 'bloco-tema'
+
+/** Cor da barra do sistema. Fora daqui ela destoa do fundo no app instalado. */
+export const SYSTEM_BAR_COLOR: Record<Theme, string> = {
+  claro: '#FAFAF8',
+  escuro: '#131211',
+}
+
 export function isTheme(value: unknown): value is Theme {
   return THEMES.some((theme) => theme === value)
 }

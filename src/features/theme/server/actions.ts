@@ -1,7 +1,6 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { revalidatePath } from 'next/cache'
 
 import {
   isTheme,
@@ -12,11 +11,18 @@ import {
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * Grava o tema no cookie, que é o que a renderização lê, e no perfil, que é o
- * que o login relê para recriar o cookie em outro aparelho. O cookie sozinho
- * bastaria para a tela deste celular; o perfil é o que sobrevive a trocar dele.
+ * Roda depois de a tela já ter trocado de tema, sem ninguém esperando.
+ *
+ * Faz duas coisas que o cliente não consegue: reemite o cookie pelo cabeçalho
+ * da resposta — cookie vindo do servidor não sofre o corte de 7 dias que o
+ * Safari aplica a cookie escrito por script — e grava a escolha no perfil, que
+ * é o que o login relê para recriar o cookie em outro aparelho.
+ *
+ * Sem `revalidatePath` de propósito: nada na tela depende do servidor para
+ * mudar de cor, e invalidar o layout inteiro jogaria fora o cache de rotas que
+ * mantém a navegação instantânea.
  */
-export async function setTheme(theme: Theme) {
+export async function sincronizarTema(theme: Theme) {
   if (!isTheme(theme)) return
 
   const store = await cookies()
@@ -30,6 +36,4 @@ export async function setTheme(theme: Theme) {
   if (user) {
     await supabase.from('profiles').update({ theme }).eq('id', user.id)
   }
-
-  revalidatePath('/', 'layout')
 }
