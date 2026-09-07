@@ -3,8 +3,8 @@
 import { Moon, Sun } from '@phosphor-icons/react/dist/ssr'
 import { useOptimistic, useTransition } from 'react'
 
+import type { Theme } from '@/features/theme/domain/theme'
 import { setTheme } from '@/features/theme/server/actions'
-import type { Theme } from '@/features/theme/server/theme'
 import { cn } from '@/shared/lib/cn'
 
 const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [

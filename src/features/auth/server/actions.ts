@@ -2,9 +2,12 @@
 
 import type { Route } from 'next'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { credentialsSchema } from '@/features/auth/domain/credentials'
+import { getProfileTheme } from '@/features/profile/server/queries'
+import { THEME_COOKIE, THEME_COOKIE_OPTIONS } from '@/features/theme/domain/theme'
 import { createClient } from '@/lib/supabase/server'
 
 export type SignInState = { error: string | null }
@@ -38,6 +41,16 @@ export async function signIn(_state: SignInState, formData: FormData): Promise<S
   if (error) {
     // Mensagem genérica de propósito: não revelar se o e-mail existe.
     return { error: 'E-mail ou senha incorretos.' }
+  }
+
+  // O tema mora no perfil, mas quem a renderização lê é o cookie. Este é o
+  // único momento em que o aparelho novo sabe de quem ele é: sem semear o
+  // cookie aqui, quem escolheu escuro abre no claro em todo celular novo.
+  const theme = await getProfileTheme(supabase)
+
+  if (theme) {
+    const store = await cookies()
+    store.set(THEME_COOKIE, theme, THEME_COOKIE_OPTIONS)
   }
 
   revalidatePath('/', 'layout')
