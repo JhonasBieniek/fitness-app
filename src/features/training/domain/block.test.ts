@@ -69,8 +69,13 @@ describe('resolvePrescription', () => {
     })
   })
 
-  it('corta para 2 séries na adaptação', () => {
-    expect(resolvePrescription(base, 'adaptacao').sets).toBe(2)
+  it('na adaptação usa as séries do plano, sem cortar', () => {
+    expect(resolvePrescription(base, 'adaptacao')).toEqual({
+      sets: 3,
+      reps: base.reps,
+      hint: null,
+      dropped: false,
+    })
   })
 
   it('aplica séries e faixa de força quando existem', () => {

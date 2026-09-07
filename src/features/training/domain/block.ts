@@ -13,16 +13,19 @@ export type Phase = (typeof PHASES)[number]
 export type PhaseInfo = {
   phase: Phase
   label: string
-  /** Uma frase sobre o que muda nesta fase. Aparece no topo do treino. */
-  guidance: string
+  /**
+   * Uma frase sobre o que muda nesta fase. Aparece no topo do treino.
+   * `null` na adaptação: ela não muda mais nada em relação ao plano, e uma
+   * frase só para não deixar o espaço vazio seria ruído.
+   */
+  guidance: string | null
 }
 
 const PHASE_INFO: Record<Phase, PhaseInfo> = {
   adaptacao: {
     phase: 'adaptacao',
     label: 'Adaptação',
-    guidance:
-      'Duas séries em tudo, terminando com 3 a 4 repetições de sobra. O objetivo é o padrão do movimento, não a carga.',
+    guidance: null,
   },
   hipertrofia: {
     phase: 'hipertrofia',
@@ -132,13 +135,11 @@ export type PrescriptionInput = {
  */
 export function resolvePrescription(input: PrescriptionInput, phase: Phase): ExercisePrescription {
   switch (phase) {
+    // A adaptação não mexe mais na prescrição: as séries são as do plano, como
+    // na hipertrofia. Ela continua existindo para nomear em que ponto do bloco
+    // a pessoa está.
     case 'adaptacao':
-      return {
-        sets: 2,
-        reps: input.reps,
-        hint: 'Adaptação: 2 séries, longe da falha',
-        dropped: false,
-      }
+      return { sets: input.sets, reps: input.reps, hint: null, dropped: false }
 
     case 'forca':
       return {

@@ -68,7 +68,9 @@ export default async function PerfilPage() {
             </div>
           </div>
 
-          <p className="text-ink-2 mt-3 text-[13px] leading-snug">{status.phase.guidance}</p>
+          {status.phase.guidance ? (
+            <p className="text-ink-2 mt-3 text-[13px] leading-snug">{status.phase.guidance}</p>
+          ) : null}
 
           <dl className="border-line mt-3 grid grid-cols-2 gap-y-2 border-t pt-3 text-[12.5px]">
             <dt className="text-ink-3">Começou em</dt>
