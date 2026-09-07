@@ -3,15 +3,7 @@ import { cookies } from 'next/headers'
 
 import { getProfile } from '@/features/profile/server/queries'
 import { resolveBlockStatus, resolvePrescription } from '@/features/training/domain/block'
-import { sessionProgress } from '@/features/training/domain/session'
-import { DayTabs } from '@/features/training/components/day-tabs'
-import { ExerciseRow } from '@/features/training/components/exercise-row'
-import { ModeToggle } from '@/features/training/components/mode-toggle'
-import {
-  CancelWorkoutButton,
-  StartWorkoutButton,
-  WorkoutTimer,
-} from '@/features/training/components/workout-controls'
+import { TrainingBoard, type BoardDay } from '@/features/training/components/training-board'
 import { type TrainingMode } from '@/features/training/server/actions'
 import { MODE_COOKIE } from '@/features/training/server/cookies'
 import { getActiveBlock, getLastLoads, getOpenSession } from '@/features/training/server/queries'
@@ -31,15 +23,16 @@ function isoWeekday(weekday: (typeof WEEKDAYS)[number]): number {
 }
 
 export default async function TreinoPage({ searchParams }: PageProps<'/treino'>) {
-  const [params, profile, block, openSession, cookieStore] = await Promise.all([
+  // Tudo em paralelo: são quatro idas ao banco, e encadeá-las somaria as
+  // latências na primeira tela, que é a que a pessoa espera olhando.
+  const [params, profile, block, openSession, lastLoads, cookieStore] = await Promise.all([
     searchParams,
     getProfile(),
     getActiveBlock(),
     getOpenSession(),
+    getLastLoads(),
     cookies(),
   ])
-
-  const lastLoads = await getLastLoads(openSession?.id)
 
   const now = zonedNow(new Date(), profile?.timeZone ?? publicEnv().NEXT_PUBLIC_APP_TIMEZONE)
   const todayWeekday = isoWeekday(now.weekday)
@@ -70,137 +63,54 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
 
   const savedMode = cookieStore.get(MODE_COOKIE)?.value
   const mode: TrainingMode = savedMode === 'sozinha' ? 'sozinha' : 'acompanhada'
-  const canChooseMode = profile?.level === 'iniciante'
 
-  const isSessionOnThisDay = openSession?.dayId === selectedDay.id
-  const sessionMode = isSessionOnThisDay ? openSession.mode : mode
-
-  const prescriptions = selectedDay.exercises.map((exercise) => ({
-    exercise,
-    prescription: resolvePrescription(
-      {
-        sets: exercise.sets,
-        reps: exercise.reps,
-        strengthSets: exercise.strengthSets,
-        strengthReps: exercise.strengthReps,
-        skipOnDeload: exercise.skipOnDeload,
-      },
-      status.phase.phase,
-    ),
+  // A prescrição de todos os dias sai aqui, de uma vez: é cálculo puro sobre
+  // dados que já estão em mãos, e resolver os cinco permite ao cliente trocar
+  // de aba sem voltar ao servidor.
+  const days: BoardDay[] = block.days.map((day) => ({
+    id: day.id,
+    weekday: day.weekday,
+    title: day.title,
+    focus: day.focus,
+    durationMinutes: day.durationMinutes,
+    exercises: day.exercises.map((exercise) => ({
+      id: exercise.id,
+      prescription: resolvePrescription(
+        {
+          sets: exercise.sets,
+          reps: exercise.reps,
+          strengthSets: exercise.strengthSets,
+          strengthReps: exercise.strengthReps,
+          skipOnDeload: exercise.skipOnDeload,
+        },
+        status.phase.phase,
+      ),
+      restSeconds: exercise.restSeconds,
+      note: exercise.note,
+      partnered: exercise.partnered,
+      solo: exercise.solo,
+    })),
   }))
-
-  const activeCount = prescriptions.filter(({ prescription }) => !prescription.dropped).length
-  const doneCount = isSessionOnThisDay
-    ? prescriptions.filter(
-        ({ exercise, prescription }) =>
-          !prescription.dropped && openSession.logs[exercise.id]?.done,
-      ).length
-    : 0
-
-  const progress = sessionProgress(doneCount, activeCount)
 
   return (
     <main className="flex flex-1 flex-col pb-6">
-      <header className="flex items-center gap-2.5 px-4 pt-4 pb-3">
-        <ProtocolDial
-          week={status.week}
-          totalWeeks={status.totalWeeks}
-          className="text-accent size-7"
-        />
-
-        <div className="min-w-0 flex-1">
-          <p className="tabular font-mono text-[12px] leading-none tracking-wide uppercase">
-            Semana {Math.min(status.week, status.totalWeeks)} de {status.totalWeeks}
-          </p>
-          <p className="text-ink-2 mt-1 truncate text-[13px] leading-none">{status.phase.label}</p>
-        </div>
-
-        {canChooseMode ? <ModeToggle mode={mode} /> : null}
-      </header>
-
-      {status.isExpired ? (
-        <p className="bg-warn-soft text-warn rounded-card mx-4 mb-3 px-3.5 py-2.5 text-[13px] leading-snug">
-          O bloco de {status.totalWeeks} semanas terminou há{' '}
-          {status.weeksOverdue === 1 ? 'uma semana' : `${status.weeksOverdue} semanas`}. Dá para
-          continuar treinando com ele, mas o próximo bloco rende mais.
-        </p>
-      ) : (
-        <p className="text-ink-2 mx-4 mb-3 text-[13px] leading-snug">{status.phase.guidance}</p>
-      )}
-
-      <DayTabs
-        days={block.days}
-        selectedWeekday={selectedDay.weekday}
+      <TrainingBoard
+        days={days}
+        initialWeekday={selectedDay.weekday}
         todayWeekday={todayWeekday}
+        status={{
+          week: status.week,
+          totalWeeks: status.totalWeeks,
+          phaseLabel: status.phase.label,
+          guidance: status.phase.guidance,
+          isExpired: status.isExpired,
+          weeksOverdue: status.weeksOverdue,
+        }}
+        session={openSession}
+        lastLoads={lastLoads}
+        initialMode={mode}
+        canChooseMode={profile?.level === 'iniciante'}
       />
-
-      {isSessionOnThisDay ? (
-        <WorkoutTimer
-          sessionId={openSession.id}
-          startedAt={openSession.startedAt}
-          done={progress.done}
-          total={progress.total}
-        />
-      ) : null}
-
-      <div className="flex items-baseline justify-between px-4 pt-4 pb-1">
-        <h1 className="text-[20px] leading-tight font-semibold tracking-tight">
-          {selectedDay.title}
-        </h1>
-        <p className="text-ink-3 tabular font-mono text-[12px]">
-          {selectedDay.focus ? `${selectedDay.focus} · ` : ''}
-          {selectedDay.durationMinutes ? `${selectedDay.durationMinutes} min` : ''}
-        </p>
-      </div>
-
-      <ul className="mt-1">
-        {prescriptions.map(({ exercise, prescription }) => {
-          const variant =
-            sessionMode === 'sozinha' && exercise.solo ? exercise.solo : exercise.partnered
-          const log = isSessionOnThisDay ? openSession.logs[exercise.id] : undefined
-
-          return (
-            <ExerciseRow
-              key={exercise.id}
-              dayExerciseId={exercise.id}
-              variant={variant}
-              prescription={prescription}
-              restSeconds={exercise.restSeconds}
-              note={exercise.note}
-              lastLoad={lastLoads[variant.id]}
-              session={
-                isSessionOnThisDay
-                  ? {
-                      id: openSession.id,
-                      done: log?.done ?? false,
-                      loadKg: log?.loadKg ?? null,
-                    }
-                  : null
-              }
-            />
-          )
-        })}
-      </ul>
-
-      {isSessionOnThisDay ? (
-        <div className="px-4 pt-3">
-          <CancelWorkoutButton sessionId={openSession.id} />
-        </div>
-      ) : (
-        <div className="px-4 pt-5">
-          <StartWorkoutButton
-            dayId={selectedDay.id}
-            mode={sessionMode}
-            week={status.week}
-            disabled={Boolean(openSession)}
-            disabledReason={
-              openSession
-                ? 'Há um treino em andamento em outro dia. Encerre antes de começar este.'
-                : undefined
-            }
-          />
-        </div>
-      )}
     </main>
   )
 }

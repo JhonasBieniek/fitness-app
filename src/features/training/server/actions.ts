@@ -30,6 +30,10 @@ async function requireUserId() {
  * Fica no cookie e não no banco porque a escolha é lida na renderização de toda
  * visita ao treino: uma consulta a mais só para saber qual coluna mostrar
  * atrasaria a primeira tela sem necessidade.
+ *
+ * Não revalida a rota de propósito. A tela já trocou de coluna sozinha — as
+ * duas vêm carregadas —, e mandar o servidor renderizar tudo de novo só para
+ * chegar ao mesmo resultado era o que travava o alternador.
  */
 export async function setTrainingMode(mode: TrainingMode) {
   const parsed = modeSchema.safeParse(mode)
@@ -41,8 +45,6 @@ export async function setTrainingMode(mode: TrainingMode) {
     sameSite: 'lax',
     path: '/',
   })
-
-  revalidatePath('/treino')
 }
 
 export type ActionResult = { error: string | null }
@@ -142,6 +144,10 @@ export type LogInput = {
 /**
  * Grava o estado de um exercício na sessão. Marcar como feito e anotar a carga
  * são a mesma escrita: separá-las duplicaria idas ao servidor no meio do treino.
+ *
+ * Não revalida a rota. A linha e o contador do cronômetro já se atualizaram no
+ * cliente, e mandar o servidor remontar a página a cada série marcada devolvia
+ * exatamente a mesma tela — com uma pausa no meio do treino como brinde.
  */
 export async function saveExerciseLog(input: LogInput): Promise<ActionResult> {
   const parsed = logSchema.safeParse(input)
@@ -164,7 +170,6 @@ export async function saveExerciseLog(input: LogInput): Promise<ActionResult> {
 
     if (error) return { error: 'Não foi possível salvar. Tente de novo.' }
 
-    revalidatePath('/treino')
     return { error: null }
   } catch {
     return { error: 'Não foi possível salvar. Tente de novo.' }
