@@ -1,11 +1,11 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import type { MealStatus } from '@/features/nutrition/domain/timeline'
 import type { Meal } from '@/features/nutrition/server/queries'
 import { cn } from '@/shared/lib/cn'
+import { TabRail } from '@/shared/ui/tab-rail'
 
 export type TimelineEntry = { meal: Meal; time: string; status: MealStatus }
 
@@ -25,72 +25,26 @@ type MealTimelineProps = {
  */
 export function MealTimeline({ entries, initialIndex }: MealTimelineProps) {
   const [index, setIndex] = useState(initialIndex)
-  const railRef = useRef<HTMLDivElement>(null)
-  const activeRef = useRef<HTMLButtonElement>(null)
-
-  // Às 21h a ceia está fora da tela, e a pessoa não deveria precisar procurar.
-  // `scrollIntoView` mexeria na rolagem vertical da página junto; aqui só a
-  // faixa se move.
-  useEffect(() => {
-    const rail = railRef.current
-    const active = activeRef.current
-    if (!rail || !active) return
-
-    rail.scrollTo({
-      left: active.offsetLeft - rail.clientWidth / 2 + active.clientWidth / 2,
-      behavior: 'instant',
-    })
-  }, [])
 
   const entry = entries[index] ?? entries[0]
   if (!entry) return null
 
   return (
     <section aria-label="Refeições do dia">
-      <div
-        ref={railRef}
-        role="tablist"
-        aria-label="Horários do dia"
-        className="no-scrollbar border-line -mx-4 flex gap-1 overflow-x-auto border-b [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)] px-4"
-      >
-        {entries.map((item, position) => {
-          const isSelected = position === index
-          const isNow = item.status === 'agora'
-
-          return (
-            <button
-              key={item.meal.id}
-              ref={isSelected ? activeRef : undefined}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => setIndex(position)}
-              className={cn(
-                'relative shrink-0 px-3 pt-2 pb-3 text-left transition-colors',
-                isSelected ? 'text-ink' : 'text-ink-3',
-              )}
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="tabular font-mono text-[12px] tracking-wide">{item.time}</span>
-                {isNow ? (
-                  <span className="bg-accent size-1.5 rounded-full" aria-label="agora" />
-                ) : null}
-              </span>
-
-              <span className="mt-0.5 block text-[14px] leading-tight font-semibold whitespace-nowrap">
-                {item.meal.name}
-              </span>
-
-              {isSelected ? (
-                <motion.span
-                  layoutId="refeicao-ativa"
-                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                  className="bg-accent absolute inset-x-3 -bottom-px h-0.5 rounded-full"
-                />
-              ) : null}
-            </button>
-          )
-        })}
+      {/* A faixa vai até a borda da tela, como no treino; o resto da rota não. */}
+      <div className="-mx-4">
+        <TabRail
+          label="Horários do dia"
+          items={entries.map((item) => ({
+            id: item.meal.id,
+            eyebrow: item.time,
+            title: item.meal.name,
+            isNow: item.status === 'agora',
+            nowLabel: 'agora',
+          }))}
+          selectedId={entry.meal.id}
+          onSelect={(id) => setIndex(entries.findIndex((item) => item.meal.id === id))}
+        />
       </div>
 
       <MealPanel key={entry.meal.id} entry={entry} />
