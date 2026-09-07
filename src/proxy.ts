@@ -15,9 +15,12 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Todas as rotas, exceto estáticos e imagens — sem isso o redirect de
-     * autenticação bloquearia CSS, JS e ícones.
+     * Todas as rotas, exceto o que é público por natureza.
+     *
+     * O manifesto e o service worker precisam estar aqui: o navegador os busca
+     * sem cookie de sessão, então o guarda os devolvia como um redirect para
+     * `/login` e o PWA ficava sem nome, sem ícone e sem tela de instalação.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\.js|offline|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
