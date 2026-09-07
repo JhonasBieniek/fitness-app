@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# Recusa o push quando o HEAD está destacado e o commit em que se está
+# trabalhando não iria parar em lugar nenhum do remoto.
+#
+# Foi assim que um refactor inteiro se perdeu: `git rebase --onto` deixa o HEAD
+# destacado, os commits seguintes vão para um HEAD que não pertence a branch
+# nenhuma, e `git push origin <branch>` envia a ref da branch — parada onde
+# estava. O Git responde "Everything up-to-date" e sai com zero. O push parece
+# ter dado certo, não leva nada, e o PR segue com o conteúdo antigo.
+#
+# É justamente o caso que o CI não alcança: o servidor só vê o que chegou, e o
+# que faltou nunca saiu daqui.
+
+# HEAD preso a uma branch — o caso normal. Nada a conferir.
+if git symbolic-ref -q HEAD >/dev/null; then
+  exit 0
+fi
+
+head_sha=$(git rev-parse HEAD)
+refs=0
+delecoes=0
+leva_o_head=nao
+
+# stdin: <ref local> <sha local> <ref remota> <sha remoto>.
+# Vem vazio quando não há nada a enviar, que é exatamente o caso perigoso.
+while read -r ref_local sha_local ref_remota sha_remoto; do
+  refs=$((refs + 1))
+
+  # SHA local só de zeros é deleção de branch remota: não carrega commit nenhum.
+  case "$sha_local" in
+    *[!0]*) ;;
+    *)
+      delecoes=$((delecoes + 1))
+      continue
+      ;;
+  esac
+
+  if git merge-base --is-ancestor "$head_sha" "$sha_local" 2>/dev/null; then
+    leva_o_head=sim
+  fi
+done
+
+# Alguma ref enviada contém o commit do HEAD: o trabalho vai junto.
+[ "$leva_o_head" = sim ] && exit 0
+
+# Só deleções: ato explícito, não põe trabalho em risco.
+[ "$refs" -gt 0 ] && [ "$refs" -eq "$delecoes" ] && exit 0
+
+# Nada carregava o HEAD, mas ele pode já existir no remoto por outro caminho.
+if [ -n "$(git branch -r --contains "$head_sha" 2>/dev/null)" ]; then
+  exit 0
+fi
+
+cat >&2 <<FIM
+
+  Push recusado: o HEAD está destacado.
+
+  Você está em $(git rev-parse --short HEAD), que não é uma branch. Este
+  commit não existe em nenhuma ref remota conhecida e não seria enviado
+  agora. Se você vem commitando aqui, o trabalho fica só nesta máquina —
+  e o Git ainda assim diria que o push deu certo.
+
+  Para levar o que está no HEAD:
+      git switch -c <nome-da-branch>
+
+  Se a intenção era outra mesmo:
+      git push --no-verify ...
+
+FIM
+exit 1

@@ -140,6 +140,18 @@ não implementação.
 5. PR com descrição do que muda e por quê. O CI precisa passar para o merge.
 6. `main` sempre deployável.
 
+### Hooks
+
+`npm install` aponta o `core.hooksPath` para `.githooks/` (script `prepare`).
+São hooks versionados, sem dependência nova.
+
+O `pre-push` recusa push com o **HEAD destacado** quando o commit atual não
+chegaria a lugar nenhum no remoto. É o modo silencioso de perder trabalho:
+depois de um `git rebase --onto`, o HEAD fica solto, os commits seguintes não
+pertencem a branch nenhuma, e `git push origin <branch>` envia a ref da branch
+— parada onde estava. O Git responde `Everything up-to-date` e sai com zero.
+O CI não pega isso: o servidor só vê o que chegou.
+
 ## Limites do plano free
 
 - **Supabase pausa o projeto após 7 dias sem requisição.** Se o app ficar fora
