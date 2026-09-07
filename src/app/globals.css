@@ -140,3 +140,51 @@ body {
     transform: scaleX(1);
   }
 }
+
+/*
+ * Modal nativo: o `showModal()` já entrega foco preso, Esc para fechar e fundo
+ * inerte — nada atrás recebe toque, sem precisar de biblioteca. Falta só travar
+ * a rolagem de trás, que o elemento não faz sozinho.
+ */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+dialog::backdrop {
+  background: hsl(30 6% 10% / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+/*
+ * A entrada e a saída precisam de `allow-discrete`, senão o `display` corta a
+ * animação no primeiro quadro. Onde o navegador não suportar, o modal aparece
+ * e some sem transição — que é uma degradação aceitável.
+ */
+dialog,
+dialog::backdrop {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    overlay 0.22s ease allow-discrete,
+    display 0.22s ease allow-discrete;
+}
+
+dialog:not([open]),
+dialog:not([open])::backdrop {
+  opacity: 0;
+}
+
+dialog:not([open]) {
+  transform: translateY(10px) scale(0.98);
+}
+
+@starting-style {
+  dialog[open],
+  dialog[open]::backdrop {
+    opacity: 0;
+  }
+
+  dialog[open] {
+    transform: translateY(10px) scale(0.98);
+  }
+}
