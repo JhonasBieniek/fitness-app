@@ -142,6 +142,15 @@ body {
 }
 
 /*
+ * Altura da barra de navegação, para quem precisa parar logo acima dela — hoje
+ * o botão de iniciar treino. O valor acompanha `shared/ui/bottom-nav`:
+ * py-2.5 (1.25rem) + ícone 23px + gap-1 (0.25rem) + rótulo 11px + a borda.
+ */
+:root {
+  --altura-do-menu: calc(3.625rem + 1px + env(safe-area-inset-bottom));
+}
+
+/*
  * Modal nativo: o `showModal()` já entrega foco preso, Esc para fechar e fundo
  * inerte — nada atrás recebe toque, sem precisar de biblioteca. Falta só travar
  * a rolagem de trás, que o elemento não faz sozinho.

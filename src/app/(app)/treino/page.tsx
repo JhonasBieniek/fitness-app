@@ -93,7 +93,7 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
   }))
 
   return (
-    <main className="flex flex-1 flex-col pb-6">
+    <main className="flex flex-1 flex-col">
       <TrainingBoard
         days={days}
         initialWeekday={selectedDay.weekday}
