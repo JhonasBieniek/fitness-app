@@ -4,7 +4,19 @@ import prettier from 'eslint-config-prettier/flat'
 
 /** @type {import('eslint').Linter.Config[]} */
 const eslintConfig = [
-  { ignores: ['.next/**', 'node_modules/**', 'coverage/**', 'supabase/.temp/**', 'next-env.d.ts'] },
+  {
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'coverage/**',
+      'supabase/.temp/**',
+      'next-env.d.ts',
+      // Worktrees criados dentro do repo trazem um checkout inteiro, com build
+      // e dependências. Sem isto o lint sai varrendo código que não é deste
+      // ramo e o `verify` fica inutilizável enquanto houver um worktree aberto.
+      '.claude/worktrees/**',
+    ],
+  },
   ...nextCoreWebVitals,
   ...nextTypescript,
   prettier,
