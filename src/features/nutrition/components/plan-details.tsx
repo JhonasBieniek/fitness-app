@@ -3,6 +3,7 @@
 import { Plus } from '@phosphor-icons/react/dist/ssr'
 import { useState } from 'react'
 
+import { parseNoteBody } from '@/features/nutrition/domain/note-blocks'
 import type { PlanNote } from '@/features/nutrition/server/queries'
 import { cn } from '@/shared/lib/cn'
 
@@ -39,21 +40,44 @@ export function PlanDetails({ notes }: { notes: PlanNote[] }) {
               />
             </button>
 
-            {isOpen ? (
-              <div className="px-3.5 pb-3.5">
-                {note.body.split('\n\n').map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="text-ink-2 mt-2 text-[13.5px] leading-relaxed first:mt-0"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-            ) : null}
+            {isOpen ? <NoteBody body={note.body} /> : null}
           </li>
         )
       })}
     </ul>
+  )
+}
+
+/**
+ * O corpo da nota: prosa onde é prosa, tabela onde há pares.
+ *
+ * Substituições e listas viravam um paredão de texto — para saber por quanto
+ * trocar o arroz era preciso ler a frase inteira. Em duas colunas a resposta
+ * está na linha, e a nota volta a servir para consulta rápida na cozinha.
+ */
+function NoteBody({ body }: { body: string }) {
+  return (
+    <div className="px-3.5 pb-3.5">
+      {parseNoteBody(body).map((block, index) =>
+        block.kind === 'tabela' ? (
+          <table key={index} className="mt-2.5 w-full border-collapse text-left first:mt-0">
+            <tbody className="divide-line divide-y">
+              {block.rows.map((row) => (
+                <tr key={row.label} className="align-baseline">
+                  <th scope="row" className="w-[38%] py-2 pr-3 text-[13px] font-semibold">
+                    {row.label}
+                  </th>
+                  <td className="text-ink-2 py-2 text-[13px] leading-snug">{row.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p key={index} className="text-ink-2 mt-2 text-[13.5px] leading-relaxed first:mt-0">
+            {block.text}
+          </p>
+        ),
+      )}
+    </div>
   )
 }

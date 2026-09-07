@@ -40,7 +40,7 @@ export type BoardStatus = {
   week: number
   totalWeeks: number
   phaseLabel: string
-  guidance: string
+  guidance: string | null
   isExpired: boolean
   weeksOverdue: number
 }
@@ -142,9 +142,9 @@ export function TrainingBoard({
           {status.weeksOverdue === 1 ? 'uma semana' : `${status.weeksOverdue} semanas`}. Dá para
           continuar treinando com ele, mas o próximo bloco rende mais.
         </p>
-      ) : (
+      ) : status.guidance ? (
         <p className="text-ink-2 mx-4 mb-3 text-[13px] leading-snug">{status.guidance}</p>
-      )}
+      ) : null}
 
       <TabRail
         label="Dias de treino"
@@ -205,11 +205,23 @@ export function TrainingBoard({
       </ul>
 
       {isSessionHere ? (
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-3 pb-6">
           <CancelWorkoutButton sessionId={session.id} />
         </div>
       ) : (
-        <div className="px-4 pt-5">
+        /*
+          O botão fica colado acima do menu enquanto houver lista para rolar.
+          `sticky`, e não `fixed`, porque o elemento continua ocupando lugar no
+          fim da lista: ao chegar no fim da rolagem ele assenta ali e o último
+          exercício aparece inteiro, sem precisar reservar altura no vazio.
+          O deslocamento é a altura do menu, senão um cobriria o outro. E
+          `mt-auto` para o dia curto, que cabe inteiro na tela: sem rolagem o
+          `sticky` nunca entra em ação e o botão ficaria pendurado no meio.
+        */
+        <div
+          className="bg-bg/90 sticky z-10 mt-auto px-4 pt-3 pb-3 backdrop-blur-md"
+          style={{ bottom: 'var(--altura-do-menu)' }}
+        >
           <StartWorkoutButton
             dayId={day.id}
             mode={sessionMode}
