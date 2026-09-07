@@ -8,6 +8,8 @@ on:
   pull_request:
     paths:
       - 'supabase/**'
+      # Mudar o próprio workflow também precisa exercitá-lo.
+      - '.github/workflows/migrations.yml'
   push:
     branches: [main]
     paths:
