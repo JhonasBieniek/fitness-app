@@ -584,4 +584,72 @@ export const CATALOG = [
       'Volte e troque, sem deixar a lombar descolar.',
     ],
   },
+  // ---------------------------------------------------------------------------
+  // Entraram com o bloco revisado (setembro de 2026)
+  // ---------------------------------------------------------------------------
+  {
+    slug: 'elevacao-lateral-maquina',
+    name: 'Elevação lateral na máquina',
+    equipment: 'máquina',
+    muscle: 'Deltoide lateral',
+    source: null, // O acervo não tem este movimento; os passos ensinam.
+    cue: 'Subir além da linha do ombro joga o esforço no trapézio.',
+    steps: [
+      'Ajuste o eixo da máquina na altura do ombro e os apoios logo acima do cotovelo.',
+      'Suba os braços até a altura do ombro, sem encolher o trapézio.',
+      'Desça em 2 segundos, sem descansar embaixo.',
+    ],
+  },
+  {
+    slug: 'leg-press-unilateral',
+    name: 'Leg press 45° unilateral',
+    equipment: 'máquina',
+    muscle: 'Glúteo máximo',
+    source: null, // O acervo não tem este movimento; os passos ensinam.
+    cue: 'O erro comum é o joelho cair para dentro na subida. Ele acompanha a linha do pé.',
+    steps: [
+      'Um pé no meio da plataforma, o outro apoiado fora dela.',
+      'Desça até o joelho passar de 90°, com a lombar colada no encosto.',
+      'Empurre pelo calcanhar até quase estender, sem travar o joelho.',
+    ],
+  },
+  {
+    slug: 'leg-press-pes-altos',
+    name: 'Leg press 45° com pés altos',
+    equipment: 'máquina',
+    muscle: 'Glúteo máximo',
+    source: null, // O acervo não tem este movimento; os passos ensinam.
+    cue: 'Pé alto tira quadríceps e põe glúteo. Tirar a lombar do encosto no fundo desfaz isso.',
+    steps: [
+      'Pés na parte de cima da plataforma, na largura dos ombros.',
+      'Desça fundo, até onde a lombar ainda fica colada no encosto.',
+      'Empurre pelo calcanhar e aperte o glúteo perto do topo.',
+    ],
+  },
+  {
+    slug: 'rdl-barra',
+    name: 'Levantamento terra romeno com barra',
+    equipment: 'barra',
+    muscle: 'Posterior de coxa',
+    source: null, // O acervo não tem este movimento; os passos ensinam.
+    cue: 'Barra longe da perna vira esforço na lombar. Ela desliza colada na coxa e na canela.',
+    steps: [
+      'Barra na frente da coxa, pegada na largura dos ombros, joelhos levemente destravados.',
+      'Leve o quadril para trás deslizando a barra pela perna, coluna neutra, até o meio da canela.',
+      'Volte empurrando o quadril à frente e aperte o glúteo no topo.',
+    ],
+  },
+  {
+    slug: 'prancha-dead-bug',
+    name: 'Prancha + dead bug',
+    equipment: 'peso do corpo',
+    muscle: 'Core',
+    source: null, // O acervo não tem este movimento; os passos ensinam.
+    cue: 'Na prancha o erro é o quadril cair; no dead bug, a lombar descolar do chão.',
+    steps: [
+      'Prancha nos antebraços por 20 a 40 s, quadril alinhado com o ombro.',
+      'Sem descansar, deitada: braço e perna opostos estendem devagar, lombar colada no chão.',
+      '8 repetições por lado e então descansa.',
+    ],
+  },
 ]

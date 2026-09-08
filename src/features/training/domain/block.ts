@@ -22,25 +22,25 @@ const PHASE_INFO: Record<Phase, PhaseInfo> = {
     phase: 'aprendizado',
     label: 'Aprendizado',
     guidance:
-      'Ficha completa, carga leve. Termine cada série com 3 repetições de sobra na semana 1 e 2 na semana 2. Anote a regulagem de cada aparelho.',
+      'Ficha completa, carga leve. Semana 1 termina cada série com 3 repetições de sobra; semana 2, com 2. Não sobe carga: o objetivo é anotar a regulagem e aprender o padrão.',
   },
   volume: {
     phase: 'volume',
     label: 'Volume',
     guidance:
-      'Compostos com 2 repetições de sobra; a última série dos isoladores com 1. Fechou o topo da faixa em todas as séries? Sobe a carga no próximo treino.',
+      'Compostos com 2 repetições de sobra; a última série dos isoladores com 1. Fechou o topo da faixa em todas as séries? Sobe a menor carga no próximo treino. Travou 2 vezes: mantém e busca reps; na 3ª, tira 5%.',
   },
   forca: {
     phase: 'forca',
     label: 'Força',
     guidance:
-      'Hip thrust, agachamento e RDL em 6 a 8 repetições com carga maior. O resto continua igual.',
+      'Hip thrust de segunda em 4×6–8; agachamento e RDL em 3×6–8, com a carga que fecha 8 com 2 de sobra. O resto segue igual, com a mesma regra de progressão.',
   },
   reteste: {
     phase: 'reteste',
     label: 'Re-teste',
     guidance:
-      'Nos principais, uma série até 1 repetição de sobra com a carga da semana 11. 12 ou mais: sobe 10%. De 9 a 11: sobe 5%. Até 8: mantém.',
+      'Nos principais, uma série até 1 repetição de sobra com a carga da semana 11, nunca até a falha. 12 ou mais: sobe 10%. De 9 a 11: sobe 5%. Até 8: mantém. Medir peso, quadril e coxa.',
   },
 }
 
