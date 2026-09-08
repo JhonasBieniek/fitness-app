@@ -2,7 +2,11 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 
 import { getProfile } from '@/features/profile/server/queries'
-import { resolveBlockStatus, resolvePrescription } from '@/features/training/domain/block'
+import {
+  exercisesForWeek,
+  resolveBlockStatus,
+  resolvePrescription,
+} from '@/features/training/domain/block'
 import { TrainingBoard, type BoardDay } from '@/features/training/components/training-board'
 import { type TrainingMode } from '@/features/training/server/actions'
 import { MODE_COOKIE } from '@/features/training/server/cookies'
@@ -66,14 +70,14 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
 
   // A prescrição de todos os dias sai aqui, de uma vez: é cálculo puro sobre
   // dados que já estão em mãos, e resolver os cinco permite ao cliente trocar
-  // de aba sem voltar ao servidor.
+  // de aba sem voltar ao servidor. Só entram as linhas da semana atual.
   const days: BoardDay[] = block.days.map((day) => ({
     id: day.id,
     weekday: day.weekday,
     title: day.title,
     focus: day.focus,
     durationMinutes: day.durationMinutes,
-    exercises: day.exercises.map((exercise) => ({
+    exercises: exercisesForWeek(day.exercises, status.prescriptionWeek).map((exercise) => ({
       id: exercise.id,
       prescription: resolvePrescription(
         {
@@ -81,7 +85,6 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
           reps: exercise.reps,
           strengthSets: exercise.strengthSets,
           strengthReps: exercise.strengthReps,
-          skipOnDeload: exercise.skipOnDeload,
         },
         status.phase.phase,
       ),

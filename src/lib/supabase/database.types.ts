@@ -387,6 +387,7 @@ export type Database = {
           day_id: string
           exercise_partnered_id: string
           exercise_solo_id: string | null
+          from_week: number
           id: string
           note: string | null
           position: number
@@ -396,11 +397,13 @@ export type Database = {
           skip_on_deload: boolean
           strength_reps: string | null
           strength_sets: number | null
+          to_week: number | null
         }
         Insert: {
           day_id: string
           exercise_partnered_id: string
           exercise_solo_id?: string | null
+          from_week?: number
           id?: string
           note?: string | null
           position: number
@@ -410,11 +413,13 @@ export type Database = {
           skip_on_deload?: boolean
           strength_reps?: string | null
           strength_sets?: number | null
+          to_week?: number | null
         }
         Update: {
           day_id?: string
           exercise_partnered_id?: string
           exercise_solo_id?: string | null
+          from_week?: number
           id?: string
           note?: string | null
           position?: number
@@ -424,6 +429,7 @@ export type Database = {
           skip_on_deload?: boolean
           strength_reps?: string | null
           strength_sets?: number | null
+          to_week?: number | null
         }
         Relationships: [
           {
