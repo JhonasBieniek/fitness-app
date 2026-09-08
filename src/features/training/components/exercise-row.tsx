@@ -104,6 +104,7 @@ export function ExerciseRow({
       )}
     >
       <ExerciseSheet
+        exerciseId={variant.id}
         name={variant.name}
         equipment={variant.equipment}
         primaryMuscle={variant.primaryMuscle}

@@ -2,11 +2,14 @@
 
 import { ArrowSquareOut, ListNumbers, X } from '@phosphor-icons/react/dist/ssr'
 import Image from 'next/image'
-import { useRef } from 'react'
+import { useRef, useState, useTransition } from 'react'
 
+import { loadExerciseHistory } from '@/features/training/server/actions'
+import type { LoadHistoryEntry } from '@/features/training/server/queries'
 import { cn } from '@/shared/lib/cn'
 
 type ExerciseSheetProps = {
+  exerciseId: string
   name: string
   equipment: string
   primaryMuscle: string
@@ -22,6 +25,16 @@ function demonstrationUrl(name: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(`como fazer ${name} execução`)}`
 }
 
+function formatLoad(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',')
+}
+
+/** `2026-09-02` vira `02/09`. O ano não cabe nem faz falta numa lista de semanas. */
+function formatDay(value: string) {
+  const [, month, day] = value.split('-')
+  return `${day}/${month}`
+}
+
 /**
  * Miniatura do exercício, que abre a folha de execução.
  *
@@ -35,6 +48,7 @@ function demonstrationUrl(name: string) {
  * temporizador de segurança para uma folha presa no DOM.
  */
 export function ExerciseSheet({
+  exerciseId,
   name,
   equipment,
   primaryMuscle,
@@ -46,6 +60,21 @@ export function ExerciseSheet({
 }: ExerciseSheetProps) {
   const dialogo = useRef<HTMLDialogElement>(null)
   const thumb = end ?? start
+
+  // O histórico é pedido na primeira abertura e fica: quem abre a ficha de
+  // novo no mesmo treino não precisa esperar de novo pela mesma lista.
+  const [history, setHistory] = useState<LoadHistoryEntry[] | null>(null)
+  const [isLoadingHistory, startLoadingHistory] = useTransition()
+
+  function abrir() {
+    dialogo.current?.showModal()
+
+    if (history === null && !isLoadingHistory) {
+      startLoadingHistory(async () => {
+        setHistory(await loadExerciseHistory(exerciseId))
+      })
+    }
+  }
 
   // As duas fotos aparecem lado a lado, e não alternadas: quem compara início e
   // fim de uma vez entende o movimento, e o acervo tem pares em que as duas
@@ -59,7 +88,7 @@ export function ExerciseSheet({
     <>
       <button
         type="button"
-        onClick={() => dialogo.current?.showModal()}
+        onClick={abrir}
         aria-label={`Ver execução de ${name}`}
         className="border-line bg-surface-2 relative size-14 shrink-0 overflow-hidden rounded-xl border transition active:scale-95"
       >
@@ -166,6 +195,38 @@ export function ExerciseSheet({
               ))}
             </ol>
           ) : null}
+
+          <section aria-label="Cargas anteriores" className="mt-4">
+            <h3 className="text-ink-3 font-mono text-[11px] tracking-wider uppercase">Cargas</h3>
+
+            {history === null ? (
+              <ul aria-hidden className="mt-2 flex flex-col gap-2">
+                {[0, 1, 2].map((item) => (
+                  <li key={item} className="bg-surface-2 h-3.5 animate-pulse rounded" />
+                ))}
+              </ul>
+            ) : history.length === 0 ? (
+              <p className="text-ink-3 mt-1.5 text-[12.5px] leading-snug">
+                Nenhuma carga anotada ainda. A primeira aparece aqui depois do treino.
+              </p>
+            ) : (
+              <ol className="divide-line mt-1 divide-y">
+                {history.map((entry, index) => (
+                  <li
+                    key={`${entry.onDate}-${index}`}
+                    className="flex items-baseline justify-between py-2 text-[13px]"
+                  >
+                    <span className="text-ink-2 tabular font-mono text-[12px]">
+                      {formatDay(entry.onDate)}
+                    </span>
+                    <span className="tabular font-mono font-medium">
+                      {formatLoad(entry.loadKg)} <span className="text-ink-3 font-normal">kg</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
 
           <a
             href={demonstrationUrl(name)}
