@@ -1,7 +1,7 @@
 'use client'
 
 import { Check } from '@phosphor-icons/react/dist/ssr'
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 
 import type { ExercisePrescription } from '@/features/training/domain/block'
 import { saveExerciseLog } from '@/features/training/server/actions'
@@ -54,14 +54,18 @@ export function ExerciseRow({
   const [persistedLoad, setPersistedLoad] = useState(savedLoad)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // As gravações desta linha saem uma atrás da outra. Marcar e anotar a carga
+  // em seguida são duas escritas na mesma linha do banco: soltas em paralelo,
+  // a primeira podia chegar por último e apagar a carga recém-digitada.
+  const fila = useRef(Promise.resolve())
 
   function persist(next: { done: boolean; loadKg: string }) {
     if (!session) return
 
     setPersistedLoad(next.loadKg)
 
-    startTransition(async () => {
-      const result = await saveExerciseLog({
+    const gravar = () =>
+      saveExerciseLog({
         sessionId: session.id,
         dayExerciseId,
         exerciseId: variant.id,
@@ -69,7 +73,11 @@ export function ExerciseRow({
         loadKg: next.loadKg === '' ? null : next.loadKg,
       })
 
-      setError(result.error)
+    const resultado = fila.current.then(gravar)
+    fila.current = resultado.then(() => undefined)
+
+    startTransition(async () => {
+      setError((await resultado).error)
     })
   }
 
