@@ -57,7 +57,7 @@ src/
     ui/                   primitivos visuais reaproveitados
   lib/
     env.ts                variáveis de ambiente validadas com Zod
-    supabase/             clients (browser, server, proxy) e tipos do banco
+    supabase/             clients (server, proxy) e tipos do banco
   proxy.ts                renova a sessão e protege as rotas privadas
 supabase/migrations/      schema versionado, uma migration por mudança
 ```
