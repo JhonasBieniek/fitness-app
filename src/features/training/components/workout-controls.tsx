@@ -10,6 +10,7 @@ import {
   startWorkout,
   type TrainingMode,
 } from '@/features/training/server/actions'
+import { cn } from '@/shared/lib/cn'
 
 type StartButtonProps = {
   dayId: string
@@ -81,6 +82,23 @@ export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) 
   const [seconds, setSeconds] = useState(() => elapsedSeconds(new Date(startedAt), new Date()))
   const [isPending, startTransition] = useTransition()
   const progress = sessionProgress(done, total)
+  // Encerrar com exercício faltando pede um segundo toque. O botão fica ao lado
+  // do contador durante o treino inteiro, e um esbarrão não pode fechar a
+  // sessão: ela não reabre. Com tudo feito, um toque basta.
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  useEffect(() => {
+    if (!isConfirming) return
+
+    const timer = window.setTimeout(() => setIsConfirming(false), 4000)
+    return () => window.clearTimeout(timer)
+  }, [isConfirming])
+
+  function finish() {
+    startTransition(async () => {
+      await finishWorkout(sessionId)
+    })
+  }
 
   useEffect(() => {
     const started = new Date(startedAt)
@@ -149,14 +167,16 @@ export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) 
         <button
           type="button"
           disabled={isPending}
-          onClick={() =>
-            startTransition(async () => {
-              await finishWorkout(sessionId)
-            })
-          }
-          className="border-line-strong rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-95 disabled:opacity-60"
+          onClick={() => {
+            if (progress.isComplete || isConfirming) finish()
+            else setIsConfirming(true)
+          }}
+          className={cn(
+            'rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-95 disabled:opacity-60',
+            isConfirming ? 'border-accent bg-accent text-accent-ink' : 'border-line-strong',
+          )}
         >
-          Encerrar
+          {isConfirming ? 'Confirmar' : 'Encerrar'}
         </button>
       </div>
 
