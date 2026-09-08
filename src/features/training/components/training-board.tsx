@@ -40,7 +40,7 @@ export type BoardStatus = {
   week: number
   totalWeeks: number
   phaseLabel: string
-  guidance: string | null
+  guidance: string
   isExpired: boolean
   weeksOverdue: number
 }
@@ -112,10 +112,8 @@ export function TrainingBoard({
     return doneHere[exerciseId] ?? session.logs[exerciseId]?.done ?? false
   }
 
-  const activeCount = day.exercises.filter((item) => !item.prescription.dropped).length
-  const doneCount = day.exercises.filter(
-    (item) => !item.prescription.dropped && isDone(item.id),
-  ).length
+  const activeCount = day.exercises.length
+  const doneCount = day.exercises.filter((item) => isDone(item.id)).length
 
   return (
     <>
@@ -142,9 +140,9 @@ export function TrainingBoard({
           {status.weeksOverdue === 1 ? 'uma semana' : `${status.weeksOverdue} semanas`}. Dá para
           continuar treinando com ele, mas o próximo bloco rende mais.
         </p>
-      ) : status.guidance ? (
+      ) : (
         <p className="text-ink-2 mx-4 mb-3 text-[13px] leading-snug">{status.guidance}</p>
-      ) : null}
+      )}
 
       <TabRail
         label="Dias de treino"

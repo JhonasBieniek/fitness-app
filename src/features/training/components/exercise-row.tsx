@@ -98,15 +98,8 @@ export function ExerciseRow({
     if (next) navigator.vibrate?.(12)
   }
 
-  const isDropped = prescription.dropped
-
   return (
-    <li
-      className={cn(
-        'border-line flex gap-3 border-b px-4 py-3.5 last:border-b-0',
-        isDropped && 'opacity-55',
-      )}
-    >
+    <li className="border-line flex gap-3 border-b px-4 py-3.5 last:border-b-0">
       <ExerciseSheet
         exerciseId={variant.id}
         name={variant.name}
@@ -132,18 +125,12 @@ export function ExerciseRow({
             </h3>
 
             <p className="text-ink-2 tabular mt-1 font-mono text-[12.5px] leading-none">
-              {isDropped ? (
-                'fora desta semana'
-              ) : (
-                <>
-                  {prescription.sets} × {prescription.reps}
-                  {restSeconds ? <span className="text-ink-3"> · {restSeconds}s</span> : null}
-                </>
-              )}
+              {prescription.sets} × {prescription.reps}
+              {restSeconds ? <span className="text-ink-3"> · {restSeconds}s</span> : null}
             </p>
           </div>
 
-          {session && !isDropped ? (
+          {session ? (
             <button
               type="button"
               onClick={toggleDone}
@@ -162,7 +149,7 @@ export function ExerciseRow({
 
         {note ? <p className="text-ink-2 mt-1.5 text-[12.5px] leading-snug">{note}</p> : null}
 
-        {session && !isDropped ? (
+        {session ? (
           <div className="mt-2.5 flex items-center gap-2">
             <label className="flex items-center gap-1.5">
               <span className="sr-only">Carga usada em {variant.name}</span>

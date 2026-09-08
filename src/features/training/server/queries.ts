@@ -25,7 +25,10 @@ export type TrainingExercise = {
   note: string | null
   strengthSets: number | null
   strengthReps: string | null
-  skipOnDeload: boolean
+  /** Primeira semana em que a linha vale. */
+  fromWeek: number
+  /** Última semana em que vale; nula até o fim do bloco. */
+  toWeek: number | null
   partnered: ExerciseVariant
   /** Ausente quando o movimento é o mesmo nas duas colunas. */
   solo: ExerciseVariant | null
@@ -92,9 +95,12 @@ const EXERCISE_FIELDS =
 /**
  * Bloco ativo com todos os dias e a prescrição de cada exercício.
  *
- * Vem em uma consulta só: são cinco dias e trinta linhas, e o app precisa dos
- * cinco para montar as abas de qualquer forma. Buscar dia a dia custaria uma
- * ida ao banco a cada toque na aba.
+ * Vem em uma consulta só: são cinco dias e trinta e poucas linhas, e o app
+ * precisa dos cinco para montar as abas de qualquer forma. Buscar dia a dia
+ * custaria uma ida ao banco a cada toque na aba.
+ *
+ * Traz todas as faixas de semana; quem escolhe a linha da semana atual é o
+ * domínio, na página. Cabe a ele porque é regra, não acesso a dado.
  */
 export async function getActiveBlock(): Promise<TrainingBlock | null> {
   const supabase = await createClient()
@@ -106,7 +112,7 @@ export async function getActiveBlock(): Promise<TrainingBlock | null> {
        training_days (
          id, weekday, title, focus, duration_minutes,
          training_day_exercises (
-           id, position, sets, reps, rest_seconds, note, strength_sets, strength_reps, skip_on_deload,
+           id, position, sets, reps, rest_seconds, note, strength_sets, strength_reps, from_week, to_week,
            partnered:exercises!training_day_exercises_exercise_partnered_id_fkey (${EXERCISE_FIELDS}),
            solo:exercises!training_day_exercises_exercise_solo_id_fkey (${EXERCISE_FIELDS})
          )
@@ -147,7 +153,8 @@ export async function getActiveBlock(): Promise<TrainingBlock | null> {
             note: item.note,
             strengthSets: item.strength_sets,
             strengthReps: item.strength_reps,
-            skipOnDeload: item.skip_on_deload,
+            fromWeek: item.from_week,
+            toWeek: item.to_week,
             partnered,
             // Quando as duas colunas apontam para o mesmo exercício, não há
             // alternativa de verdade: o alternador não deve sugerir que há.

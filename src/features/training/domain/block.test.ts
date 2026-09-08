@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveBlockStatus, resolvePrescription, type PrescriptionInput } from './block'
+import {
+  exercisesForWeek,
+  resolveBlockStatus,
+  resolvePrescription,
+  type PrescriptionInput,
+} from './block'
 
 const START = '2026-09-07' // uma segunda-feira
 
@@ -15,13 +20,12 @@ describe('resolveBlockStatus', () => {
   })
 
   it.each([
-    ['2026-09-07', 1, 'adaptacao'],
-    ['2026-09-14', 2, 'adaptacao'],
-    ['2026-09-21', 3, 'hipertrofia'],
-    ['2026-10-12', 6, 'hipertrofia'],
+    ['2026-09-07', 1, 'aprendizado'],
+    ['2026-09-14', 2, 'aprendizado'],
+    ['2026-09-21', 3, 'volume'],
+    ['2026-10-12', 6, 'volume'],
     ['2026-10-19', 7, 'forca'],
-    ['2026-11-09', 10, 'forca'],
-    ['2026-11-16', 11, 'deload'],
+    ['2026-11-16', 11, 'forca'],
     ['2026-11-23', 12, 'reteste'],
   ])('em %s está na semana %i, fase %s', (today, week, phase) => {
     const status = resolveBlockStatus(START, today)
@@ -40,6 +44,7 @@ describe('resolveBlockStatus', () => {
     // A prescrição congela na última semana em vez de sumir: bloco vencido
     // avisa, mas não impede de treinar.
     expect(status.phase.phase).toBe('reteste')
+    expect(status.prescriptionWeek).toBe(12)
   })
 
   it('trata bloco com data futura como semana 1', () => {
@@ -57,59 +62,46 @@ describe('resolvePrescription', () => {
     reps: '8–10',
     strengthSets: 4,
     strengthReps: '6–8',
-    skipOnDeload: false,
   }
 
-  it('usa a prescrição do banco na hipertrofia', () => {
-    expect(resolvePrescription(base, 'hipertrofia')).toEqual({
-      sets: 3,
-      reps: '8–10',
-      dropped: false,
-    })
+  it.each(['aprendizado', 'volume'] as const)('usa a prescrição do banco em %s', (phase) => {
+    expect(resolvePrescription(base, phase)).toEqual({ sets: 3, reps: '8–10' })
   })
 
-  it('na adaptação usa as séries do plano, sem cortar', () => {
-    expect(resolvePrescription(base, 'adaptacao')).toEqual({
-      sets: 3,
-      reps: base.reps,
-      dropped: false,
-    })
-  })
-
-  it('aplica séries e faixa de força quando existem', () => {
-    const result = resolvePrescription(base, 'forca')
-
-    expect(result.sets).toBe(4)
-    expect(result.reps).toBe('6–8')
+  it.each(['forca', 'reteste'] as const)('aplica séries e faixa de força em %s', (phase) => {
+    expect(resolvePrescription(base, phase)).toEqual({ sets: 4, reps: '6–8' })
   })
 
   it('mantém a base na força quando o exercício não muda de fase', () => {
     const isolator = { ...base, strengthSets: null, strengthReps: null }
 
-    expect(resolvePrescription(isolator, 'forca')).toEqual({
+    expect(resolvePrescription(isolator, 'forca')).toEqual({ sets: 3, reps: '8–10' })
+  })
+
+  it('aceita faixa de força sem série de força', () => {
+    expect(resolvePrescription({ ...base, strengthSets: null }, 'forca')).toEqual({
       sets: 3,
-      reps: '8–10',
-      dropped: false,
+      reps: '6–8',
     })
   })
+})
 
-  it('reduz à metade no deload, arredondando para baixo', () => {
-    expect(resolvePrescription(base, 'deload').sets).toBe(1)
-    expect(resolvePrescription({ ...base, sets: 4 }, 'deload').sets).toBe(2)
+describe('exercisesForWeek', () => {
+  const goblet = { id: 'goblet', fromWeek: 1, toWeek: 4 }
+  const livre = { id: 'livre', fromWeek: 5, toWeek: null }
+  const sempre = { id: 'leg-press', fromWeek: 1, toWeek: null }
+  const items = [goblet, livre, sempre]
+
+  it('mostra a linha da faixa da semana', () => {
+    expect(exercisesForWeek(items, 1)).toEqual([goblet, sempre])
+    expect(exercisesForWeek(items, 4)).toEqual([goblet, sempre])
+    expect(exercisesForWeek(items, 5)).toEqual([livre, sempre])
+    expect(exercisesForWeek(items, 12)).toEqual([livre, sempre])
   })
 
-  it('nunca deixa o deload zerar as séries', () => {
-    expect(resolvePrescription({ ...base, sets: 1 }, 'deload').sets).toBe(1)
-  })
-
-  it('tira os unilaterais do deload sem escondê-los', () => {
-    const result = resolvePrescription({ ...base, skipOnDeload: true }, 'deload')
-
-    expect(result.dropped).toBe(true)
-    expect(result.sets).toBe(1)
-  })
-
-  it('mantém unilaterais nas demais fases', () => {
-    expect(resolvePrescription({ ...base, skipOnDeload: true }, 'forca').dropped).toBe(false)
+  it('inclui as duas pontas da faixa', () => {
+    expect(exercisesForWeek([{ fromWeek: 3, toWeek: 3 }], 3)).toHaveLength(1)
+    expect(exercisesForWeek([{ fromWeek: 3, toWeek: 3 }], 2)).toHaveLength(0)
+    expect(exercisesForWeek([{ fromWeek: 3, toWeek: 3 }], 4)).toHaveLength(0)
   })
 })

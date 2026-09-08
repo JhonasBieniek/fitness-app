@@ -6,49 +6,41 @@
  * possa ser testada sem mexer no relógio.
  */
 
-export const PHASES = ['adaptacao', 'hipertrofia', 'forca', 'deload', 'reteste'] as const
+export const PHASES = ['aprendizado', 'volume', 'forca', 'reteste'] as const
 
 export type Phase = (typeof PHASES)[number]
 
 export type PhaseInfo = {
   phase: Phase
   label: string
-  /**
-   * Uma frase sobre o que muda nesta fase. Aparece no topo do treino.
-   * `null` na adaptação: ela não muda mais nada em relação ao plano, e uma
-   * frase só para não deixar o espaço vazio seria ruído.
-   */
-  guidance: string | null
+  /** O que muda nesta fase: quanto sobra no fim da série e quando a carga sobe. */
+  guidance: string
 }
 
 const PHASE_INFO: Record<Phase, PhaseInfo> = {
-  adaptacao: {
-    phase: 'adaptacao',
-    label: 'Adaptação',
-    guidance: null,
-  },
-  hipertrofia: {
-    phase: 'hipertrofia',
-    label: 'Hipertrofia',
+  aprendizado: {
+    phase: 'aprendizado',
+    label: 'Aprendizado',
     guidance:
-      'Compostos com 2 a 3 repetições de sobra. Fechou o topo da faixa em todas as séries? Sobe a carga no próximo treino.',
+      'Ficha completa, carga leve. Termine cada série com 3 repetições de sobra na semana 1 e 2 na semana 2. Anote a regulagem de cada aparelho.',
+  },
+  volume: {
+    phase: 'volume',
+    label: 'Volume',
+    guidance:
+      'Compostos com 2 repetições de sobra; a última série dos isoladores com 1. Fechou o topo da faixa em todas as séries? Sobe a carga no próximo treino.',
   },
   forca: {
     phase: 'forca',
     label: 'Força',
-    guidance: 'Compostos em 6 a 8 repetições com carga maior. Isoladores ganham uma série.',
-  },
-  deload: {
-    phase: 'deload',
-    label: 'Deload',
     guidance:
-      'Metade das séries, mesma carga, 4 repetições de sobra. Sem unilaterais. A semana serve para recuperar.',
+      'Hip thrust, agachamento e RDL em 6 a 8 repetições com carga maior. O resto continua igual.',
   },
   reteste: {
     phase: 'reteste',
     label: 'Re-teste',
     guidance:
-      'Nos principais, uma série até 1 repetição de sobra com a carga da semana 10. Nunca até a falha técnica.',
+      'Nos principais, uma série até 1 repetição de sobra com a carga da semana 11. 12 ou mais: sobe 10%. De 9 a 11: sobe 5%. Até 8: mantém.',
   },
 }
 
@@ -61,6 +53,11 @@ export type BlockStatus = {
   isExpired: boolean
   /** Semanas passadas do prazo. Zero enquanto o bloco está em dia. */
   weeksOverdue: number
+  /**
+   * Semana usada para escolher a prescrição. Igual a `week` dentro do bloco e
+   * congelada na última quando ele venceu: o treino continua existindo.
+   */
+  prescriptionWeek: number
 }
 
 const MS_PER_DAY = 86_400_000
@@ -77,15 +74,15 @@ function daysBetween(from: string, to: string): number {
   return Math.floor((end - start) / MS_PER_DAY)
 }
 
-function phaseForWeek(week: number, totalWeeks: number): Phase {
-  // Depois do fim do bloco a prescrição congela na última semana útil, para o
-  // treino continuar existindo enquanto o novo bloco não é montado.
-  const effective = Math.min(week, totalWeeks)
-
-  if (effective <= 2) return 'adaptacao'
-  if (effective <= 6) return 'hipertrofia'
-  if (effective <= totalWeeks - 2) return 'forca'
-  if (effective === totalWeeks - 1) return 'deload'
+/**
+ * Sem semana de deload de propósito: uma semana parada no meio do bloco não
+ * melhora hipertrofia e piora força (Coleman e Schoenfeld, 2024). Quem segura a
+ * fadiga é a regra de carga — travou duas vezes, mantém; na terceira, −5%.
+ */
+function phaseForWeek(week: number): Phase {
+  if (week <= 2) return 'aprendizado'
+  if (week <= 6) return 'volume'
+  if (week <= 11) return 'forca'
   return 'reteste'
 }
 
@@ -100,21 +97,23 @@ export function resolveBlockStatus(startedOn: string, today: string, totalWeeks 
   // Um bloco que ainda não começou é tratado como semana 1: melhor mostrar o
   // treino do que uma tela vazia porque a data foi cadastrada para a frente.
   const week = elapsedDays < 0 ? 1 : Math.floor(elapsedDays / 7) + 1
+  // Depois do fim do bloco a prescrição congela na última semana, para o
+  // treino continuar existindo enquanto o novo bloco não é montado.
+  const prescriptionWeek = Math.min(week, totalWeeks)
 
   return {
     week,
     totalWeeks,
-    phase: PHASE_INFO[phaseForWeek(week, totalWeeks)],
+    phase: PHASE_INFO[phaseForWeek(prescriptionWeek)],
     isExpired: week > totalWeeks,
     weeksOverdue: Math.max(0, week - totalWeeks),
+    prescriptionWeek,
   }
 }
 
 export type ExercisePrescription = {
   sets: number
   reps: string
-  /** Fora do treino nesta semana, mas continua visível e marcável. */
-  dropped: boolean
 }
 
 export type PrescriptionInput = {
@@ -122,45 +121,42 @@ export type PrescriptionInput = {
   reps: string
   strengthSets: number | null
   strengthReps: string | null
-  skipOnDeload: boolean
 }
 
 /**
  * Quantas séries e em que faixa, para a fase de hoje.
  *
- * A prescrição base do banco vale para hipertrofia. As outras fases derivam
- * dela, e é por isso que mudar de fase não exige reescrever o plano.
+ * A prescrição base do banco vale do aprendizado ao volume. As semanas de força
+ * e o re-teste usam a faixa de força onde ela existe — e é por isso que mudar
+ * de fase não exige reescrever o plano.
  */
 export function resolvePrescription(input: PrescriptionInput, phase: Phase): ExercisePrescription {
-  switch (phase) {
-    // A adaptação não mexe mais na prescrição: as séries são as do plano, como
-    // na hipertrofia. Ela continua existindo para nomear em que ponto do bloco
-    // a pessoa está.
-    case 'adaptacao':
-      return { sets: input.sets, reps: input.reps, dropped: false }
-
-    case 'forca':
-      return {
-        sets: input.strengthSets ?? input.sets,
-        reps: input.strengthReps ?? input.reps,
-        dropped: false,
-      }
-
-    case 'deload':
-      return {
-        sets: Math.max(1, Math.floor(input.sets / 2)),
-        reps: input.reps,
-        dropped: input.skipOnDeload,
-      }
-
-    case 'reteste':
-      return {
-        sets: input.strengthSets ?? input.sets,
-        reps: input.strengthReps ?? input.reps,
-        dropped: false,
-      }
-
-    case 'hipertrofia':
-      return { sets: input.sets, reps: input.reps, dropped: false }
+  if (phase === 'forca' || phase === 'reteste') {
+    return {
+      sets: input.strengthSets ?? input.sets,
+      reps: input.strengthReps ?? input.reps,
+    }
   }
+
+  return { sets: input.sets, reps: input.reps }
+}
+
+export type WeekRanged = {
+  /** Primeira semana em que a linha vale. */
+  fromWeek: number
+  /** Última semana em que vale; nula até o fim do bloco. */
+  toWeek: number | null
+}
+
+/**
+ * As linhas que valem em uma semana.
+ *
+ * É o que troca goblet squat por agachamento livre na semana 5 sem ninguém
+ * mexer no plano: as duas linhas existem, cada uma com a sua faixa, e a tela
+ * mostra a que vale hoje.
+ */
+export function exercisesForWeek<T extends WeekRanged>(items: readonly T[], week: number): T[] {
+  return items.filter(
+    (item) => item.fromWeek <= week && (item.toWeek === null || week <= item.toWeek),
+  )
 }
