@@ -92,6 +92,10 @@ export function ExerciseRow({
     const next = !done
     onDoneChange(next)
     persist({ done: next, loadKg: load })
+
+    // Um pulso curto confirma o toque sem olhar para a tela, entre uma série e
+    // outra. Onde não existe, nada acontece.
+    if (next) navigator.vibrate?.(12)
   }
 
   const isDropped = prescription.dropped
