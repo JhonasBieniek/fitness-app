@@ -232,25 +232,30 @@ export async function getLastLoads(): Promise<Record<string, LastLoad>> {
   return result
 }
 
-export type LoadHistoryEntry = { loadKg: number | null; reps: number | null; onDate: string }
+export type LoadHistoryEntry = { loadKg: number; onDate: string }
 
-/** Histórico de um exercício, do mais recente para o mais antigo. */
+/**
+ * Cargas já usadas em um exercício, da mais recente para a mais antiga.
+ *
+ * Só entra o que tem carga anotada: uma série marcada sem número não diz nada
+ * sobre progressão. O treino em andamento entra também — é a linha de hoje.
+ */
 export async function getExerciseHistory(exerciseId: string): Promise<LoadHistoryEntry[]> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('exercise_logs')
-    .select('load_kg, reps, updated_at, workout_sessions (local_date)')
+    .select('load_kg, updated_at, workout_sessions (local_date)')
     .eq('exercise_id', exerciseId)
     .eq('done', true)
+    .not('load_kg', 'is', null)
     .order('updated_at', { ascending: false })
-    .limit(20)
+    .limit(8)
 
   if (error) throw new Error(`Não foi possível carregar o histórico: ${error.message}`)
 
   return (data ?? []).map((row) => ({
-    loadKg: row.load_kg === null ? null : Number(row.load_kg),
-    reps: row.reps,
+    loadKg: Number(row.load_kg),
     onDate: row.workout_sessions?.local_date ?? row.updated_at.slice(0, 10),
   }))
 }

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { z } from 'zod'
 
 import { MODE_COOKIE } from '@/features/training/server/cookies'
+import { getExerciseHistory, type LoadHistoryEntry } from '@/features/training/server/queries'
 import { createClient } from '@/lib/supabase/server'
 import { publicEnv } from '@/lib/env'
 import { zonedNow } from '@/shared/lib/time'
@@ -173,5 +174,23 @@ export async function saveExerciseLog(input: LogInput): Promise<ActionResult> {
     return { error: null }
   } catch {
     return { error: 'Não foi possível salvar. Tente de novo.' }
+  }
+}
+
+/**
+ * Histórico de cargas de um exercício, pedido quando a ficha abre.
+ *
+ * Não vem com a página de propósito: são cinco dias de exercícios, e trazer o
+ * histórico de todos para mostrar o de um só engordaria toda visita ao treino.
+ * Falhar aqui devolve lista vazia — a ficha continua útil sem ele.
+ */
+export async function loadExerciseHistory(exerciseId: string): Promise<LoadHistoryEntry[]> {
+  const parsed = z.uuid().safeParse(exerciseId)
+  if (!parsed.success) return []
+
+  try {
+    return await getExerciseHistory(parsed.data)
+  } catch {
+    return []
   }
 }

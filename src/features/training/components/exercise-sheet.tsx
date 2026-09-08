@@ -2,11 +2,14 @@
 
 import { ArrowSquareOut, ListNumbers, X } from '@phosphor-icons/react/dist/ssr'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState, useTransition } from 'react'
 
+import { loadExerciseHistory } from '@/features/training/server/actions'
+import type { LoadHistoryEntry } from '@/features/training/server/queries'
 import { cn } from '@/shared/lib/cn'
 
 type ExerciseSheetProps = {
+  exerciseId: string
   name: string
   equipment: string
   primaryMuscle: string
@@ -22,40 +25,71 @@ function demonstrationUrl(name: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(`como fazer ${name} execução`)}`
 }
 
+function formatLoad(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',')
+}
+
+/** `2026-09-02` vira `02/09`. O ano não cabe nem faz falta numa lista de semanas. */
+function formatDay(value: string) {
+  const [, month, day] = value.split('-')
+  return `${day}/${month}`
+}
+
 /**
- * Miniatura do exercício, que abre a tela de execução.
+ * Miniatura do exercício, que abre a folha de execução.
  *
  * A miniatura mostra a posição final, e não a inicial: é ela que identifica o
  * movimento de relance. Quem não tem foto mostra que tem passos escritos.
+ *
+ * A folha é um `<dialog>` nativo, como as regras da dieta: `showModal()` prende
+ * o foco, fecha no Esc e deixa a lista de trás inerte — no iOS, o único jeito
+ * confiável de a lista não rolar por baixo do dedo. A entrada e a saída são
+ * transições de CSS sobre `[open]`, então não há estado de montagem nem
+ * temporizador de segurança para uma folha presa no DOM.
  */
-export function ExerciseSheet(props: ExerciseSheetProps) {
-  // Dois estados, e não um: a folha precisa continuar no DOM enquanto desliza
-  // para fora. `montada` diz se existe; `visivel` dispara a transição.
-  const [montada, setMontada] = useState(false)
-  const [visivel, setVisivel] = useState(false)
-  const thumb = props.end ?? props.start
+export function ExerciseSheet({
+  exerciseId,
+  name,
+  equipment,
+  primaryMuscle,
+  cue,
+  steps,
+  start,
+  end,
+  loop,
+}: ExerciseSheetProps) {
+  const dialogo = useRef<HTMLDialogElement>(null)
+  const thumb = end ?? start
+
+  // O histórico é pedido na primeira abertura e fica: quem abre a ficha de
+  // novo no mesmo treino não precisa esperar de novo pela mesma lista.
+  const [history, setHistory] = useState<LoadHistoryEntry[] | null>(null)
+  const [isLoadingHistory, startLoadingHistory] = useTransition()
 
   function abrir() {
-    setMontada(true)
-    // Um quadro depois: ligar a classe no mesmo quadro da montagem não é
-    // transição nenhuma, o navegador pinta direto no estado final.
-    requestAnimationFrame(() => setVisivel(true))
+    dialogo.current?.showModal()
+
+    if (history === null && !isLoadingHistory) {
+      startLoadingHistory(async () => {
+        setHistory(await loadExerciseHistory(exerciseId))
+      })
+    }
   }
 
-  function fechar() {
-    setVisivel(false)
-    // A saída normal é o fim da transição. Esta é a rede de proteção: uma aba em
-    // segundo plano não dispara `transitionend`, e uma folha presa no DOM cobre
-    // a tela inteira.
-    window.setTimeout(() => setMontada(false), 500)
-  }
+  // As duas fotos aparecem lado a lado, e não alternadas: quem compara início e
+  // fim de uma vez entende o movimento, e o acervo tem pares em que as duas
+  // posições são quase iguais — alternar essas duas não mostra execução nenhuma.
+  const frames = [
+    { src: start, label: 'início' },
+    { src: end, label: 'fim' },
+  ].filter((frame): frame is { src: string; label: string } => Boolean(frame.src))
 
   return (
     <>
       <button
         type="button"
         onClick={abrir}
-        aria-label={`Ver execução de ${props.name}`}
+        aria-label={`Ver execução de ${name}`}
         className="border-line bg-surface-2 relative size-14 shrink-0 overflow-hidden rounded-xl border transition active:scale-95"
       >
         {thumb ? (
@@ -77,88 +111,15 @@ export function ExerciseSheet(props: ExerciseSheetProps) {
         )}
       </button>
 
-      {montada ? (
-        <Sheet
-          {...props}
-          visivel={visivel}
-          onClose={fechar}
-          onSaiuDeCena={() => setMontada(false)}
-        />
-      ) : null}
-    </>
-  )
-}
-
-type SheetProps = ExerciseSheetProps & {
-  visivel: boolean
-  onClose: () => void
-  /** Chamado quando a animação de saída termina: só então a folha some do DOM. */
-  onSaiuDeCena: () => void
-}
-
-function Sheet({
-  name,
-  equipment,
-  primaryMuscle,
-  cue,
-  steps,
-  start,
-  end,
-  loop,
-  visivel,
-  onClose,
-  onSaiuDeCena,
-}: SheetProps) {
-  const closeRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    closeRef.current?.focus()
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-
-    document.addEventListener('keydown', onKeyDown)
-    // Sem isso a lista de exercícios rola atrás da folha.
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
-  // As duas fotos aparecem lado a lado, e não alternadas: quem compara início e
-  // fim de uma vez entende o movimento, e o acervo tem pares em que as duas
-  // posições são quase iguais — alternar essas duas não mostra execução nenhuma.
-  const frames = [
-    { src: start, label: 'início' },
-    { src: end, label: 'fim' },
-  ].filter((frame): frame is { src: string; label: string } => Boolean(frame.src))
-
-  return (
-    <div
-      onClick={onClose}
-      onTransitionEnd={(event) => {
-        // A transição das filhas também sobe até aqui.
-        if (event.target === event.currentTarget && !visivel) onSaiuDeCena()
-      }}
-      className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-black/45 transition-opacity duration-200',
-        // Saindo de cena ela não intercepta mais o toque, mesmo antes de sumir.
-        visivel ? 'opacity-100' : 'pointer-events-none opacity-0',
-      )}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        ref={dialogo}
         aria-label={`Execução de ${name}`}
-        onClick={(event) => event.stopPropagation()}
-        className={cn(
-          'bg-bg flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl transition-transform duration-300 ease-[cubic-bezier(0.2,0.9,0.25,1)]',
-          visivel ? 'translate-y-0' : 'translate-y-full',
-        )}
+        // Toque no fundo fecha. O alvo só é o próprio <dialog> quando o toque
+        // cai fora da caixa: o conteúdo é um filho e para nele.
+        onClick={(event) => {
+          if (event.target === dialogo.current) dialogo.current?.close()
+        }}
+        className="folha bg-bg text-ink mx-auto mt-auto mb-0 flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl p-0"
       >
         <div className="flex items-start gap-3 px-5 pt-4 pb-3">
           <div className="min-w-0 flex-1">
@@ -169,9 +130,8 @@ function Sheet({
           </div>
 
           <button
-            ref={closeRef}
             type="button"
-            onClick={onClose}
+            onClick={() => dialogo.current?.close()}
             aria-label="Fechar"
             className="bg-surface-2 text-ink-2 shrink-0 rounded-full p-2 transition active:scale-95"
           >
@@ -180,7 +140,7 @@ function Sheet({
         </div>
 
         <div
-          className="overflow-y-auto px-5 pb-5"
+          className="overflow-y-auto overscroll-contain px-5 pb-5"
           style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
         >
           {loop ? (
@@ -236,6 +196,38 @@ function Sheet({
             </ol>
           ) : null}
 
+          <section aria-label="Cargas anteriores" className="mt-4">
+            <h3 className="text-ink-3 font-mono text-[11px] tracking-wider uppercase">Cargas</h3>
+
+            {history === null ? (
+              <ul aria-hidden className="mt-2 flex flex-col gap-2">
+                {[0, 1, 2].map((item) => (
+                  <li key={item} className="bg-surface-2 h-3.5 animate-pulse rounded" />
+                ))}
+              </ul>
+            ) : history.length === 0 ? (
+              <p className="text-ink-3 mt-1.5 text-[12.5px] leading-snug">
+                Nenhuma carga anotada ainda. A primeira aparece aqui depois do treino.
+              </p>
+            ) : (
+              <ol className="divide-line mt-1 divide-y">
+                {history.map((entry, index) => (
+                  <li
+                    key={`${entry.onDate}-${index}`}
+                    className="flex items-baseline justify-between py-2 text-[13px]"
+                  >
+                    <span className="text-ink-2 tabular font-mono text-[12px]">
+                      {formatDay(entry.onDate)}
+                    </span>
+                    <span className="tabular font-mono font-medium">
+                      {formatLoad(entry.loadKg)} <span className="text-ink-3 font-normal">kg</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
           <a
             href={demonstrationUrl(name)}
             target="_blank"
@@ -247,7 +239,7 @@ function Sheet({
           </a>
           <p className="text-ink-3 mt-1.5 text-center text-[11.5px]">Abre fora do app.</p>
         </div>
-      </div>
-    </div>
+      </dialog>
+    </>
   )
 }

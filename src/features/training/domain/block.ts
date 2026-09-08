@@ -113,8 +113,6 @@ export function resolveBlockStatus(startedOn: string, today: string, totalWeeks 
 export type ExercisePrescription = {
   sets: number
   reps: string
-  /** Ajuste da fase, quando existe. Some nas semanas em que nada muda. */
-  hint: string | null
   /** Fora do treino nesta semana, mas continua visível e marcável. */
   dropped: boolean
 }
@@ -139,13 +137,12 @@ export function resolvePrescription(input: PrescriptionInput, phase: Phase): Exe
     // na hipertrofia. Ela continua existindo para nomear em que ponto do bloco
     // a pessoa está.
     case 'adaptacao':
-      return { sets: input.sets, reps: input.reps, hint: null, dropped: false }
+      return { sets: input.sets, reps: input.reps, dropped: false }
 
     case 'forca':
       return {
         sets: input.strengthSets ?? input.sets,
         reps: input.strengthReps ?? input.reps,
-        hint: input.strengthSets || input.strengthReps ? 'Fase de força' : null,
         dropped: false,
       }
 
@@ -153,7 +150,6 @@ export function resolvePrescription(input: PrescriptionInput, phase: Phase): Exe
       return {
         sets: Math.max(1, Math.floor(input.sets / 2)),
         reps: input.reps,
-        hint: input.skipOnDeload ? 'Fora do deload' : 'Deload: mesma carga, 4 reps de sobra',
         dropped: input.skipOnDeload,
       }
 
@@ -161,11 +157,10 @@ export function resolvePrescription(input: PrescriptionInput, phase: Phase): Exe
       return {
         sets: input.strengthSets ?? input.sets,
         reps: input.strengthReps ?? input.reps,
-        hint: 'Re-teste: última série até 1 rep de sobra',
         dropped: false,
       }
 
     case 'hipertrofia':
-      return { sets: input.sets, reps: input.reps, hint: null, dropped: false }
+      return { sets: input.sets, reps: input.reps, dropped: false }
   }
 }

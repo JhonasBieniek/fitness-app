@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 
+import { SYSTEM_BAR_COLOR } from '@/features/theme/domain/theme'
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Bloco — treino e dieta',
@@ -9,8 +11,10 @@ export default function manifest(): MetadataRoute.Manifest {
     // Abre sem barra de navegador: instalado, precisa parecer um app.
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#FAFAF8',
-    theme_color: '#FAFAF8',
+    // A cor do tema claro, que é o padrão do app: o instalador só lê o
+    // manifesto uma vez, antes de saber a preferência de quem instala.
+    background_color: SYSTEM_BAR_COLOR.claro,
+    theme_color: SYSTEM_BAR_COLOR.claro,
     lang: 'pt-BR',
     dir: 'ltr',
     categories: ['health', 'fitness', 'lifestyle'],

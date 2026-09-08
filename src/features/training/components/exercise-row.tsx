@@ -1,7 +1,7 @@
 'use client'
 
 import { Check } from '@phosphor-icons/react/dist/ssr'
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 
 import type { ExercisePrescription } from '@/features/training/domain/block'
 import { saveExerciseLog } from '@/features/training/server/actions'
@@ -46,17 +46,26 @@ export function ExerciseRow({
   // `done` vem do board: é ele que conta quantos exercícios faltam, e duas
   // cópias do mesmo booleano acabariam discordando.
   const done = session?.done ?? false
-  const [load, setLoad] = useState(
-    session?.loadKg === null || session?.loadKg === undefined ? '' : formatLoad(session.loadKg),
-  )
+  const savedLoad =
+    session?.loadKg === null || session?.loadKg === undefined ? '' : formatLoad(session.loadKg)
+  const [load, setLoad] = useState(savedLoad)
+  // A última carga que chegou ao servidor. Tocar no campo e sair sem mudar
+  // nada não deve custar uma gravação — na academia isso acontece o tempo todo.
+  const [persistedLoad, setPersistedLoad] = useState(savedLoad)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // As gravações desta linha saem uma atrás da outra. Marcar e anotar a carga
+  // em seguida são duas escritas na mesma linha do banco: soltas em paralelo,
+  // a primeira podia chegar por último e apagar a carga recém-digitada.
+  const fila = useRef(Promise.resolve())
 
   function persist(next: { done: boolean; loadKg: string }) {
     if (!session) return
 
-    startTransition(async () => {
-      const result = await saveExerciseLog({
+    setPersistedLoad(next.loadKg)
+
+    const gravar = () =>
+      saveExerciseLog({
         sessionId: session.id,
         dayExerciseId,
         exerciseId: variant.id,
@@ -64,8 +73,17 @@ export function ExerciseRow({
         loadKg: next.loadKg === '' ? null : next.loadKg,
       })
 
-      setError(result.error)
+    const resultado = fila.current.then(gravar)
+    fila.current = resultado.then(() => undefined)
+
+    startTransition(async () => {
+      setError((await resultado).error)
     })
+  }
+
+  function commitLoad() {
+    if (load.trim() === persistedLoad.trim()) return
+    persist({ done, loadKg: load })
   }
 
   function toggleDone() {
@@ -74,6 +92,10 @@ export function ExerciseRow({
     const next = !done
     onDoneChange(next)
     persist({ done: next, loadKg: load })
+
+    // Um pulso curto confirma o toque sem olhar para a tela, entre uma série e
+    // outra. Onde não existe, nada acontece.
+    if (next) navigator.vibrate?.(12)
   }
 
   const isDropped = prescription.dropped
@@ -86,6 +108,7 @@ export function ExerciseRow({
       )}
     >
       <ExerciseSheet
+        exerciseId={variant.id}
         name={variant.name}
         equipment={variant.equipment}
         primaryMuscle={variant.primaryMuscle}
@@ -149,7 +172,13 @@ export function ExerciseRow({
                 value={load}
                 placeholder="—"
                 onChange={(event) => setLoad(event.target.value)}
-                onBlur={() => persist({ done, loadKg: load })}
+                onBlur={commitLoad}
+                // O teclado do celular tem "concluído", não "tab": Enter grava e
+                // recolhe o teclado sem precisar tocar fora do campo.
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                enterKeyHint="done"
                 className="border-line bg-surface-2 tabular focus:border-accent w-16 rounded-lg border px-2 py-1 text-center font-mono text-[13px] outline-none"
               />
               <span className="text-ink-2 font-mono text-[12px]">kg</span>

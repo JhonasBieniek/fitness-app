@@ -197,3 +197,22 @@ dialog:not([open]) {
     transform: translateY(10px) scale(0.98);
   }
 }
+
+/*
+ * Folha que sobe do rodapé — a ficha do exercício. Mesmo <dialog> das regras,
+ * com outra trajetória: em vez de surgir no meio, desliza a altura inteira.
+ */
+dialog.folha {
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+dialog.folha:not([open]) {
+  transform: translateY(100%);
+}
+
+@starting-style {
+  dialog.folha[open] {
+    transform: translateY(100%);
+  }
+}

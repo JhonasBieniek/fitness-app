@@ -64,7 +64,6 @@ describe('resolvePrescription', () => {
     expect(resolvePrescription(base, 'hipertrofia')).toEqual({
       sets: 3,
       reps: '8–10',
-      hint: null,
       dropped: false,
     })
   })
@@ -73,7 +72,6 @@ describe('resolvePrescription', () => {
     expect(resolvePrescription(base, 'adaptacao')).toEqual({
       sets: 3,
       reps: base.reps,
-      hint: null,
       dropped: false,
     })
   })
@@ -91,7 +89,6 @@ describe('resolvePrescription', () => {
     expect(resolvePrescription(isolator, 'forca')).toEqual({
       sets: 3,
       reps: '8–10',
-      hint: null,
       dropped: false,
     })
   })
@@ -109,7 +106,7 @@ describe('resolvePrescription', () => {
     const result = resolvePrescription({ ...base, skipOnDeload: true }, 'deload')
 
     expect(result.dropped).toBe(true)
-    expect(result.hint).toBe('Fora do deload')
+    expect(result.sets).toBe(1)
   })
 
   it('mantém unilaterais nas demais fases', () => {

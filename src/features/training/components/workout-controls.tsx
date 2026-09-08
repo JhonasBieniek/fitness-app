@@ -3,13 +3,14 @@
 import { Play } from '@phosphor-icons/react/dist/ssr'
 import { useEffect, useState, useTransition } from 'react'
 
-import { elapsedSeconds, formatDuration } from '@/features/training/domain/session'
+import { elapsedSeconds, formatDuration, sessionProgress } from '@/features/training/domain/session'
 import {
   cancelWorkout,
   finishWorkout,
   startWorkout,
   type TrainingMode,
 } from '@/features/training/server/actions'
+import { cn } from '@/shared/lib/cn'
 
 type StartButtonProps = {
   dayId: string
@@ -80,6 +81,24 @@ type TimerProps = {
 export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) {
   const [seconds, setSeconds] = useState(() => elapsedSeconds(new Date(startedAt), new Date()))
   const [isPending, startTransition] = useTransition()
+  const progress = sessionProgress(done, total)
+  // Encerrar com exercício faltando pede um segundo toque. O botão fica ao lado
+  // do contador durante o treino inteiro, e um esbarrão não pode fechar a
+  // sessão: ela não reabre. Com tudo feito, um toque basta.
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  useEffect(() => {
+    if (!isConfirming) return
+
+    const timer = window.setTimeout(() => setIsConfirming(false), 4000)
+    return () => window.clearTimeout(timer)
+  }, [isConfirming])
+
+  function finish() {
+    startTransition(async () => {
+      await finishWorkout(sessionId)
+    })
+  }
 
   useEffect(() => {
     const started = new Date(startedAt)
@@ -101,12 +120,16 @@ export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) 
   // segue igual — por isso o erro é silencioso.
   useEffect(() => {
     let sentinel: WakeLockSentinel | null = null
-    let released = false
+    let unmounted = false
 
     const request = async () => {
       try {
         if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return
-        sentinel = await navigator.wakeLock.request('screen')
+        const lock = await navigator.wakeLock.request('screen')
+        // O pedido pode voltar depois de o treino ter sido encerrado: soltar
+        // aqui, senão a tela ficaria acesa sem cronômetro nenhum na tela.
+        if (unmounted) void lock.release().catch(() => {})
+        else sentinel = lock
       } catch {
         sentinel = null
       }
@@ -116,10 +139,9 @@ export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) 
     document.addEventListener('visibilitychange', request)
 
     return () => {
-      released = true
+      unmounted = true
       document.removeEventListener('visibilitychange', request)
       void sentinel?.release().catch(() => {})
-      void released
     }
   }, [])
 
@@ -139,27 +161,29 @@ export function WorkoutTimer({ sessionId, startedAt, done, total }: TimerProps) 
         </p>
 
         <p className="text-ink-2 tabular ml-auto font-mono text-[13px]">
-          {done}/{total}
+          {progress.done}/{progress.total}
         </p>
 
         <button
           type="button"
           disabled={isPending}
-          onClick={() =>
-            startTransition(async () => {
-              await finishWorkout(sessionId)
-            })
-          }
-          className="border-line-strong rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-95 disabled:opacity-60"
+          onClick={() => {
+            if (progress.isComplete || isConfirming) finish()
+            else setIsConfirming(true)
+          }}
+          className={cn(
+            'rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-95 disabled:opacity-60',
+            isConfirming ? 'border-accent bg-accent text-accent-ink' : 'border-line-strong',
+          )}
         >
-          Encerrar
+          {isConfirming ? 'Confirmar' : 'Encerrar'}
         </button>
       </div>
 
       <div className="bg-surface-2 h-0.5 w-full">
         <div
           className="bg-accent h-full transition-[width] duration-300"
-          style={{ width: `${total === 0 ? 0 : (done / total) * 100}%` }}
+          style={{ width: `${progress.ratio * 100}%` }}
         />
       </div>
     </div>
