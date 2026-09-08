@@ -46,14 +46,19 @@ export function ExerciseRow({
   // `done` vem do board: é ele que conta quantos exercícios faltam, e duas
   // cópias do mesmo booleano acabariam discordando.
   const done = session?.done ?? false
-  const [load, setLoad] = useState(
-    session?.loadKg === null || session?.loadKg === undefined ? '' : formatLoad(session.loadKg),
-  )
+  const savedLoad =
+    session?.loadKg === null || session?.loadKg === undefined ? '' : formatLoad(session.loadKg)
+  const [load, setLoad] = useState(savedLoad)
+  // A última carga que chegou ao servidor. Tocar no campo e sair sem mudar
+  // nada não deve custar uma gravação — na academia isso acontece o tempo todo.
+  const [persistedLoad, setPersistedLoad] = useState(savedLoad)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function persist(next: { done: boolean; loadKg: string }) {
     if (!session) return
+
+    setPersistedLoad(next.loadKg)
 
     startTransition(async () => {
       const result = await saveExerciseLog({
@@ -66,6 +71,11 @@ export function ExerciseRow({
 
       setError(result.error)
     })
+  }
+
+  function commitLoad() {
+    if (load.trim() === persistedLoad.trim()) return
+    persist({ done, loadKg: load })
   }
 
   function toggleDone() {
@@ -149,7 +159,13 @@ export function ExerciseRow({
                 value={load}
                 placeholder="—"
                 onChange={(event) => setLoad(event.target.value)}
-                onBlur={() => persist({ done, loadKg: load })}
+                onBlur={commitLoad}
+                // O teclado do celular tem "concluído", não "tab": Enter grava e
+                // recolhe o teclado sem precisar tocar fora do campo.
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                enterKeyHint="done"
                 className="border-line bg-surface-2 tabular focus:border-accent w-16 rounded-lg border px-2 py-1 text-center font-mono text-[13px] outline-none"
               />
               <span className="text-ink-2 font-mono text-[12px]">kg</span>

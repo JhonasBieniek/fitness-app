@@ -44,7 +44,13 @@ export function TabRail({ label, items, selectedId, onSelect }: TabRailProps) {
     const active = activeRef.current
     if (!active) return
 
-    setTraco({ left: active.offsetLeft, width: active.offsetWidth })
+    const medida = { left: active.offsetLeft, width: active.offsetWidth }
+
+    // Só troca o estado quando a medida mudou: o pai re-renderiza a faixa a
+    // cada série marcada, e cada uma custaria uma segunda pintura à toa.
+    setTraco((atual) =>
+      atual && atual.left === medida.left && atual.width === medida.width ? atual : medida,
+    )
   }, [selectedId, items])
 
   // Centraliza a aba aberta só na montagem: na sexta, ou às 21h, a aba certa
