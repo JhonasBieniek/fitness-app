@@ -44,9 +44,20 @@ export async function updateSession(request: NextRequest) {
 
   // Não colocar código entre createServerClient e getUser: qualquer await no
   // meio pode fazer a sessão ser descartada de forma difícil de depurar.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  //
+  // Reabrir o app depois de um tempo em segundo plano costuma pegar a rede
+  // ainda subindo: se o Supabase não responder a tempo, deixar a exceção
+  // estourar derruba o proxy inteiro e a Vercel mostra a própria tela de erro
+  // da infraestrutura, no lugar do app. Falhar aberto aqui só adia a checagem
+  // por um request — quem realmente barra dado de outra pessoa é a RLS, no
+  // Postgres, não este redirecionamento.
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    return response
+  }
 
   const { pathname } = request.nextUrl
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
