@@ -243,7 +243,33 @@ Frutas: banana, maçã, mamão, melão, manga, abacaxi, laranja, morango, uva.
 
 Legumes e verduras: alface, rúcula, agrião, tomate, pepino, cenoura, beterraba, abobrinha, chuchu, brócolis, couve-flor, vagem, berinjela.
 
-Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.');
+Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.'),
+    (v_plan, 'detalhe', 4, 'Porções de frutas', 'Abacaxi | 80 g
+Acerola | 120 g
+Ameixa | 75 g
+Banana | 60 g
+Caju | 100 g
+Caqui | 60 g
+Carambola | 90 g
+Figo | 100 g
+Goiaba | 90 g
+Graviola | 70 g
+Jabuticaba | 80 g
+Kiwi | 100 g
+Laranja | 100 g
+Maçã | 70 g
+Mamão | 100 g
+Manga | 60 g
+Maracujá | 80 g
+Melancia | 120 g
+Melão | 130 g
+Morango | 120 g
+Pera | 80 g
+Pêssego | 100 g
+Pitanga | 100 g
+Romã | 60 g
+Tangerina ou poncã | 100 g
+Uva | 80 g');
 end $$;
 
 -- ===== ele (jhonas@bloco.local) =====
@@ -488,5 +514,31 @@ Frutas: banana, maçã, mamão, melão, manga, abacaxi, laranja, morango, uva.
 
 Legumes e verduras: alface, rúcula, agrião, tomate, pepino, cenoura, beterraba, abobrinha, chuchu, brócolis, couve-flor, vagem, berinjela.
 
-Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.');
+Temperos: alho, cebola, salsinha, cebolinha, orégano, manjericão, açafrão, páprica, pimenta-do-reino, limão, vinagre.'),
+    (v_plan, 'detalhe', 4, 'Porções de frutas', 'Abacaxi | 80 g
+Acerola | 120 g
+Ameixa | 75 g
+Banana | 60 g
+Caju | 100 g
+Caqui | 60 g
+Carambola | 90 g
+Figo | 100 g
+Goiaba | 90 g
+Graviola | 70 g
+Jabuticaba | 80 g
+Kiwi | 100 g
+Laranja | 100 g
+Maçã | 70 g
+Mamão | 100 g
+Manga | 60 g
+Maracujá | 80 g
+Melancia | 120 g
+Melão | 130 g
+Morango | 120 g
+Pera | 80 g
+Pêssego | 100 g
+Pitanga | 100 g
+Romã | 60 g
+Tangerina ou poncã | 100 g
+Uva | 80 g');
 end $$;
