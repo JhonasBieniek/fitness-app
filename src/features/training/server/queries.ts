@@ -56,7 +56,10 @@ export type OpenSession = {
   dayId: string
   mode: 'acompanhada' | 'sozinha'
   startedAt: string
-  logs: Record<string, { done: boolean; loadKg: number | null; reps: number | null; exerciseId: string }>
+  logs: Record<
+    string,
+    { done: boolean; loadKg: number | null; reps: number | null; exerciseId: string }
+  >
 }
 
 type ExerciseRow = {

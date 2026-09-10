@@ -6,7 +6,12 @@
  * Supabase. Sem este arquivo, o Next não tinha limite nenhum: o erro chegava
  * cru até a Vercel, que mostra a própria tela genérica no lugar do app.
  */
-export default function ErrorBoundary({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorBoundary({
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 px-8 text-center">
       <h1 className="text-[17px] font-semibold">Não foi desta vez</h1>
