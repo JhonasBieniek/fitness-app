@@ -65,8 +65,9 @@ type TrainingBoardProps = {
  * era refeita a cada toque, e o toque travava.
  *
  * O mesmo vale para Acompanhada/Sozinha: as duas colunas vêm juntas, e alternar
- * troca o nome do exercício na hora. O cookie é gravado em segundo plano, só
- * para a próxima visita abrir do jeito certo.
+ * troca o nome do exercício na hora — mesmo com um treino em andamento. Só a
+ * marcação de feito tem dono na posição, não na variação exibida: trocar de
+ * coluna no meio do treino não desfaz o que já foi marcado.
  */
 export function TrainingBoard({
   days,
@@ -79,7 +80,14 @@ export function TrainingBoard({
   canChooseMode,
 }: TrainingBoardProps) {
   const [weekday, setWeekday] = useState(initialWeekday)
-  const [mode, setMode] = useState(initialMode)
+
+  // Se já existe um treino em andamento no dia inicial, o alternador começa na
+  // coluna com que ele foi iniciado — é o que a lista mostra de cara. Fora
+  // disso, vale a preferência salva no cookie.
+  const initialDay = days.find((item) => item.weekday === initialWeekday)
+  const [mode, setMode] = useState(
+    session && initialDay && session.dayId === initialDay.id ? session.mode : initialMode,
+  )
 
   // O que foi marcado nesta sessão. Fica fora da rota porque a rota desmonta ao
   // trocar de tela: sem isso, ir à dieta e voltar apagaria os riscos da tela.
@@ -101,7 +109,6 @@ export function TrainingBoard({
   if (!day) return null
 
   const isSessionHere = session !== null && session.dayId === day.id
-  const sessionMode = isSessionHere ? session.mode : mode
 
   // O id sai daqui em vez de sair de dentro do `map`: o retorno de chamada roda
   // depois da renderização, e ali o compilador já não sabe que há sessão.
@@ -176,8 +183,13 @@ export function TrainingBoard({
 
       <ul className="mt-1">
         {day.exercises.map((item) => {
-          const variant = sessionMode === 'sozinha' && item.solo ? item.solo : item.partnered
+          const variant = mode === 'sozinha' && item.solo ? item.solo : item.partnered
           const log = isSessionHere ? session.logs[item.id] : undefined
+          // A carga gravada pertence a uma variação específica. Trocar de coluna
+          // troca o exercício mostrado, então uma carga anotada na outra coluna
+          // não pode aparecer aqui como se fosse dela — mesmo com a posição, o
+          // peso, e o "feito" continuando os mesmos.
+          const loadForVariant = log?.exerciseId === variant.id ? log.loadKg : null
 
           return (
             <ExerciseRow
@@ -190,7 +202,7 @@ export function TrainingBoard({
               lastLoad={lastLoads[variant.id]}
               session={
                 isSessionHere
-                  ? { id: session.id, done: isDone(item.id), loadKg: log?.loadKg ?? null }
+                  ? { id: session.id, done: isDone(item.id), loadKg: loadForVariant }
                   : null
               }
               onDoneChange={(next) => {
@@ -222,7 +234,7 @@ export function TrainingBoard({
         >
           <StartWorkoutButton
             dayId={day.id}
-            mode={sessionMode}
+            mode={mode}
             week={status.week}
             disabled={session !== null}
             disabledReason={

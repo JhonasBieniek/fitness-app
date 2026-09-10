@@ -56,7 +56,10 @@ export type OpenSession = {
   dayId: string
   mode: 'acompanhada' | 'sozinha'
   startedAt: string
-  logs: Record<string, { done: boolean; loadKg: number | null; reps: number | null }>
+  logs: Record<
+    string,
+    { done: boolean; loadKg: number | null; reps: number | null; exerciseId: string }
+  >
 }
 
 type ExerciseRow = {
@@ -173,7 +176,9 @@ export async function getOpenSession(): Promise<OpenSession | null> {
 
   const { data, error } = await supabase
     .from('workout_sessions')
-    .select('id, day_id, mode, started_at, exercise_logs (day_exercise_id, done, load_kg, reps)')
+    .select(
+      'id, day_id, mode, started_at, exercise_logs (day_exercise_id, exercise_id, done, load_kg, reps)',
+    )
     .is('ended_at', null)
     .maybeSingle()
 
@@ -182,7 +187,12 @@ export async function getOpenSession(): Promise<OpenSession | null> {
 
   const logs: OpenSession['logs'] = {}
   for (const log of data.exercise_logs ?? []) {
-    logs[log.day_exercise_id] = { done: log.done, loadKg: log.load_kg, reps: log.reps }
+    logs[log.day_exercise_id] = {
+      done: log.done,
+      loadKg: log.load_kg,
+      reps: log.reps,
+      exerciseId: log.exercise_id,
+    }
   }
 
   return {
