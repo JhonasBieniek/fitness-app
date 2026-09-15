@@ -30,7 +30,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="border-line bg-surface/85 sticky bottom-0 z-20 border-t backdrop-blur-md"
+      className="border-line bg-surface shrink-0 border-t"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="mx-auto grid max-w-md grid-cols-3">

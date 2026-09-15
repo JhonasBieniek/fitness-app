@@ -27,7 +27,7 @@ export default async function DietaPage() {
 
   if (!plan) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 px-8 text-center">
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 overflow-y-auto px-8 text-center">
         <h1 className="text-[17px] font-semibold">Nenhum plano ativo</h1>
         <p className="text-ink-2 text-[14px] leading-snug">
           Assim que um cardápio for cadastrado, as refeições do dia aparecem aqui.
@@ -52,7 +52,7 @@ export default async function DietaPage() {
   ]
 
   return (
-    <main className="flex flex-1 flex-col gap-5 px-4 pt-4 pb-6">
+    <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-6">
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-[20px] leading-tight font-semibold tracking-tight">Alimentação</h1>
         <RulesDialog rules={plan.rules} />
