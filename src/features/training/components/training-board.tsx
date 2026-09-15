@@ -181,7 +181,7 @@ export function TrainingBoard({
         </p>
       </div>
 
-      <ul className="mt-1">
+      <ul className="mt-1 pb-4">
         {day.exercises.map((item) => {
           const variant = mode === 'sozinha' && item.solo ? item.solo : item.partnered
           const log = isSessionHere ? session.logs[item.id] : undefined
@@ -220,18 +220,15 @@ export function TrainingBoard({
         </div>
       ) : (
         /*
-          O botão fica colado acima do menu enquanto houver lista para rolar.
-          `sticky`, e não `fixed`, porque o elemento continua ocupando lugar no
-          fim da lista: ao chegar no fim da rolagem ele assenta ali e o último
-          exercício aparece inteiro, sem precisar reservar altura no vazio.
-          O deslocamento é a altura do menu, senão um cobriria o outro. E
-          `mt-auto` para o dia curto, que cabe inteiro na tela: sem rolagem o
-          `sticky` nunca entra em ação e o botão ficaria pendurado no meio.
+          O botão fica colado no rodapé da área de rolagem enquanto houver lista
+          para rolar. `sticky bottom-0`, e não `fixed`: no fim da rolagem ele
+          assenta em fluxo e o `pb-4` da lista garante que o último exercício
+          apareça inteiro acima dele. O menu agora vive fora desta rolagem, então
+          não há mais deslocamento a compensar. E `mt-auto` para o dia curto, que
+          cabe inteiro na tela: sem rolagem o `sticky` não entra em ação e, sem
+          ele, o botão ficaria pendurado no meio.
         */
-        <div
-          className="bg-bg/90 sticky z-10 mt-auto px-4 pt-3 pb-3 backdrop-blur-md"
-          style={{ bottom: 'var(--altura-do-menu)' }}
-        >
+        <div className="bg-bg/90 sticky bottom-0 z-10 mt-auto px-4 pt-3 pb-3 backdrop-blur-md">
           <StartWorkoutButton
             dayId={day.id}
             mode={mode}

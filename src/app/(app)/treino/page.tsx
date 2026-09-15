@@ -43,7 +43,7 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
 
   if (!block || block.days.length === 0) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 px-8 text-center">
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 overflow-y-auto px-8 text-center">
         <ProtocolDial className="text-ink-3 size-8" />
         <h1 className="mt-2 text-[17px] font-semibold">Nenhum bloco ativo</h1>
         <p className="text-ink-2 text-[14px] leading-snug">
@@ -96,7 +96,7 @@ export default async function TreinoPage({ searchParams }: PageProps<'/treino'>)
   }))
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <TrainingBoard
         days={days}
         initialWeekday={selectedDay.weekday}

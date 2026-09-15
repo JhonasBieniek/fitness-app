@@ -39,7 +39,7 @@ export default async function PerfilPage() {
   const status = block ? resolveBlockStatus(block.startedOn, now.localDate, block.totalWeeks) : null
 
   return (
-    <main className="flex flex-1 flex-col gap-5 px-4 pt-4 pb-6">
+    <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-6">
       <header>
         <h1 className="text-[20px] leading-tight font-semibold tracking-tight">
           {profile?.displayName ?? user.displayName}
