@@ -52,7 +52,7 @@ export default async function DietaPage() {
   ]
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-6">
+    <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-6 *:shrink-0">
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-[20px] leading-tight font-semibold tracking-tight">Alimentação</h1>
         <RulesDialog rules={plan.rules} />
