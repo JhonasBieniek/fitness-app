@@ -14,6 +14,11 @@ import { BottomNav } from '@/shared/ui/bottom-nav'
  * por cima. O `min-h-0` é o que deixa o `main` encolher e rolar de verdade — sem
  * ele, um filho de flex nunca fica menor que o próprio conteúdo.
  *
+ * O avesso disso morde os filhos do `main`: um filho com `overflow` diferente
+ * de `visible` (ex.: o `overflow-hidden` dos cantos arredondados) perde esse
+ * piso e é espremido em vez de transbordar — some conteúdo e o `main` não rola,
+ * porque para ele tudo coube. Por isso o `main` em coluna leva `*:shrink-0`.
+ *
  * O layout não lê a sessão de propósito. Um `await` no topo daqui segura o
  * `{children}` inteiro: a página só começava a buscar os dados dela depois de
  * uma ida ao Supabase que o proxy já tinha feito no mesmo request. Quem barra
